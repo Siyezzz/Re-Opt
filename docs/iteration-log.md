@@ -305,3 +305,35 @@ now provide independent evidence on future pushes and pull requests.
 ### Next Refinement
 
 Add a badge or CI status note after the first remote run is observed.
+
+## 2026-09-19 - Missed Optional Evidence Penalty
+
+### Objective
+
+Prevent budget pruning from looking better merely because it deletes useful
+optional evidence.
+
+### Implementation
+
+Extended `PlanScore` with:
+
+- total value
+- value coverage
+- missed optional value
+
+Then updated utility scoring:
+
+```text
+utility = value - token_cost - latency_cost - risk_cost
+          - missed_optional_cost - violation_penalty
+```
+
+### Observed Result
+
+The tight-budget benchmark still selects `budget-pruning-v0`, but the selected
+utility now reflects that it dropped the optional secondary sweep.
+
+### Next Refinement
+
+Learn the missed-optional penalty from observed task outcomes instead of using a
+fixed hand-tuned weight.

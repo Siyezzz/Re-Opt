@@ -113,7 +113,10 @@ class PlanScore:
     estimated_tokens: int
     serial_minutes: int
     parallel_minutes: int
+    total_value: float
     covered_value: float
+    value_coverage: float
+    missed_optional_value: float
     covered_risk: float
     warnings: tuple[str, ...] = ()
 

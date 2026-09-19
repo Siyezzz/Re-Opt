@@ -22,6 +22,7 @@ def solve_optimization(
     token_weight: float = 0.0001,
     minute_weight: float = 0.01,
     risk_weight: float = 0.15,
+    missed_optional_weight: float = 0.25,
 ) -> OptimizationRun:
     """Compare known strategies and select one with an explicit utility score."""
     schedulers = [HeuristicScheduler(), BudgetPruningScheduler()]
@@ -38,6 +39,7 @@ def solve_optimization(
             token_weight=token_weight,
             minute_weight=minute_weight,
             risk_weight=risk_weight,
+            missed_optional_weight=missed_optional_weight,
         ),
     )
     decisions = (
@@ -56,9 +58,13 @@ def solve_optimization(
         ),
         OptimizationDecision(
             step="score_candidates",
-            choice="utility = value - token_cost - latency_cost - risk_cost - violation_penalty",
+            choice=(
+                "utility = value - token_cost - latency_cost - risk_cost "
+                "- missed_optional_cost - violation_penalty"
+            ),
             rationale=(
-                "Budget fit matters, but dropped value and residual risk must remain visible."
+                "Budget fit matters, but dropped value, residual risk, and missing "
+                "optional evidence must remain visible."
             ),
         ),
         OptimizationDecision(
@@ -76,8 +82,8 @@ def solve_optimization(
         selected_reason=_selection_reason(selected, constraints),
         decisions=decisions,
         next_refinement=(
-            "Calibrate utility weights with observed task outcomes and add a quality "
-            "penalty for missing optional evidence."
+            "Calibrate utility weights with observed task outcomes and distinguish "
+            "useful optional evidence from nice-to-have optional work."
         ),
     )
 
@@ -98,6 +104,7 @@ def format_optimization_run(run: OptimizationRun) -> str:
             f"- {score.strategy}: tokens={score.estimated_tokens}, "
             f"serial={score.serial_minutes}, parallel={score.parallel_minutes}, "
             f"value={score.covered_value}, risk={score.covered_risk}, "
+            f"coverage={score.value_coverage}, missed_optional={score.missed_optional_value}, "
             f"utility={_utility(score, run.constraints):.3f}"
         )
         for warning in score.warnings:
@@ -146,6 +153,7 @@ def _utility(
     token_weight: float = 0.0001,
     minute_weight: float = 0.01,
     risk_weight: float = 0.15,
+    missed_optional_weight: float = 0.25,
 ) -> float:
     token_overrun = max(0, score.estimated_tokens - constraints.token_budget)
     minute_overrun = max(0, score.parallel_minutes - constraints.time_budget_minutes)
@@ -155,6 +163,7 @@ def _utility(
         - score.estimated_tokens * token_weight
         - score.parallel_minutes * minute_weight
         - score.covered_risk * risk_weight
+        - score.missed_optional_value * missed_optional_weight
         - violation_penalty
     )
 
@@ -165,6 +174,7 @@ def _selection_reason(score: PlanScore, constraints: ConstraintSet) -> str:
     fit = "fits" if fits_tokens and fits_time else "violates"
     return (
         f"{score.strategy} {fit} hard budgets with value={score.covered_value}, "
+        f"coverage={score.value_coverage}, missed_optional={score.missed_optional_value}, "
         f"risk={score.covered_risk}, tokens={score.estimated_tokens}, "
         f"parallel_minutes={score.parallel_minutes}."
     )

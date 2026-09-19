@@ -23,7 +23,8 @@ def main() -> None:
             print(
                 f"- {score.strategy}: tokens={score.estimated_tokens}, "
                 f"serial={score.serial_minutes}, parallel={score.parallel_minutes}, "
-                f"value={score.covered_value}, risk={score.covered_risk}"
+                f"value={score.covered_value}, coverage={score.value_coverage}, "
+                f"missed_optional={score.missed_optional_value}, risk={score.covered_risk}"
             )
             for warning in score.warnings:
                 print(f"  warning: {warning}")

@@ -39,8 +39,11 @@ def render_seed_journal(run_date: date | None = None) -> str:
                     f"quality>={constraints.quality_target}"
                 ),
                 "",
-                "| Strategy | Tokens | Serial min | Parallel min | Value | Risk | Warnings |",
-                "| --- | ---: | ---: | ---: | ---: | ---: | --- |",
+                (
+                    "| Strategy | Tokens | Serial min | Parallel min | Value | "
+                    "Coverage | Missed optional | Risk | Warnings |"
+                ),
+                "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
             ]
         )
         for score in run.candidate_scores:
@@ -48,7 +51,8 @@ def render_seed_journal(run_date: date | None = None) -> str:
             lines.append(
                 f"| {score.strategy} | {score.estimated_tokens} | "
                 f"{score.serial_minutes} | {score.parallel_minutes} | "
-                f"{score.covered_value} | {score.covered_risk} | {warnings} |"
+                f"{score.covered_value} | {score.value_coverage} | "
+                f"{score.missed_optional_value} | {score.covered_risk} | {warnings} |"
             )
         lines.extend(
             [
