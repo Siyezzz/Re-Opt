@@ -8,10 +8,8 @@ from reopt import (
     AgentRole,
     BudgetPruningScheduler,
     HeuristicScheduler,
-    OutcomeRecord,
     format_optimization_run,
     load_seed_benchmarks,
-    propose_utility_weights,
     solve_optimization,
 )
 from reopt.models import UtilityWeights
@@ -21,6 +19,13 @@ from reopt.export import export_seed_runs_json
 from reopt.diff import diff_exports
 from reopt.snapshot import write_seed_snapshot
 from reopt.regression import check_seed_baseline, compare_seed_baseline
+from reopt.outcomes import (
+    OutcomeRecord,
+    calibration_report,
+    dump_outcomes,
+    load_outcomes,
+    propose_utility_weights,
+)
 
 
 class HeuristicSchedulerTest(unittest.TestCase):
@@ -171,6 +176,31 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertGreater(proposed.token, base.token)
         self.assertGreater(proposed.minute, base.minute)
         self.assertGreater(proposed.missed_optional, base.missed_optional)
+
+    def test_outcomes_round_trip_and_report(self) -> None:
+        base = UtilityWeights()
+        outcome = OutcomeRecord(
+            graph_id="tight-research-seed",
+            strategy="budget-pruning-v0",
+            observed_quality=0.7,
+            target_quality=0.8,
+            actual_tokens=7600,
+            token_budget=7000,
+            actual_minutes=70,
+            time_budget_minutes=65,
+            missed_optional_harm=0.4,
+        )
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "outcomes.json"
+
+            dump_outcomes(path, (outcome,))
+            loaded = load_outcomes(path)
+            proposed = propose_utility_weights(base, loaded)
+            report = calibration_report(base, proposed, loaded)
+
+        self.assertEqual(loaded, (outcome,))
+        self.assertIn("# Utility Weight Calibration", report)
+        self.assertIn("tight-research-seed/budget-pruning-v0", report)
 
 
 if __name__ == "__main__":

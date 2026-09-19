@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+import argparse
+import json
+from dataclasses import asdict, dataclass, replace
+from pathlib import Path
 
 from .models import UtilityWeights
 
@@ -18,6 +21,17 @@ class OutcomeRecord:
     actual_minutes: int
     time_budget_minutes: int
     missed_optional_harm: float = 0.0
+
+
+def load_outcomes(path: Path) -> tuple[OutcomeRecord, ...]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return tuple(OutcomeRecord(**item) for item in data)
+
+
+def dump_outcomes(path: Path, outcomes: tuple[OutcomeRecord, ...]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = [asdict(outcome) for outcome in outcomes]
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def propose_utility_weights(
@@ -55,8 +69,67 @@ def propose_utility_weights(
     )
 
 
+def calibration_report(
+    base: UtilityWeights,
+    proposed: UtilityWeights,
+    outcomes: tuple[OutcomeRecord, ...],
+) -> str:
+    lines = [
+        "# Utility Weight Calibration",
+        "",
+        f"outcomes: {len(outcomes)}",
+        "",
+        "| Weight | Current | Proposed | Delta |",
+        "| --- | ---: | ---: | ---: |",
+    ]
+    for field in (
+        "quality",
+        "token",
+        "minute",
+        "risk",
+        "missed_optional",
+        "token_overrun_multiplier",
+        "minute_overrun",
+    ):
+        current = getattr(base, field)
+        candidate = getattr(proposed, field)
+        lines.append(f"| {field} | {current} | {candidate} | {candidate - current:+.6f} |")
+
+    lines.extend(["", "Outcome signals:", ""])
+    for outcome in outcomes:
+        quality_gap = max(0.0, outcome.target_quality - outcome.observed_quality)
+        token_overrun = max(0, outcome.actual_tokens - outcome.token_budget)
+        time_overrun = max(0, outcome.actual_minutes - outcome.time_budget_minutes)
+        lines.append(
+            "- "
+            f"{outcome.graph_id}/{outcome.strategy}: "
+            f"quality_gap={quality_gap:.3f}, "
+            f"token_overrun={token_overrun}, "
+            f"time_overrun={time_overrun}, "
+            f"missed_optional_harm={outcome.missed_optional_harm:.3f}"
+        )
+
+    return "\n".join(lines) + "\n"
+
+
 def _average(values: object) -> float:
     items = tuple(values)
     if not items:
         return 0.0
     return sum(items) / len(items)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Propose Re-Opt utility weight updates from outcome records."
+    )
+    parser.add_argument("outcomes", type=Path, help="Outcome JSON file.")
+    args = parser.parse_args()
+    records = load_outcomes(args.outcomes)
+    base = UtilityWeights()
+    proposed = propose_utility_weights(base, records)
+    print(calibration_report(base, proposed, records))
+
+
+if __name__ == "__main__":
+    main()

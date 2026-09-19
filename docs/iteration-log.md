@@ -386,3 +386,29 @@ evidence harm increases the relevant weights.
 
 Persist outcome records and compare proposed weights against the current default
 weights using the regression gate before adopting them.
+
+## 2026-09-19 - Outcome Calibration Report
+
+### Objective
+
+Persist observed outcomes and turn them into a weight-calibration report.
+
+### Implementation
+
+Added:
+
+- outcome JSON load/dump helpers
+- `python -m reopt.outcomes outcomes/seed-outcomes.json`
+- `outcomes/seed-outcomes.json`, a first synthetic seed outcome
+- calibration report tests
+
+### Observed Result
+
+The calibration command proposes higher quality, token, minute, and
+missed-optional penalties from a low-quality, over-budget, over-time tight
+research outcome. Defaults remain unchanged.
+
+### Next Refinement
+
+Run proposed weights through benchmark exports without adopting them, then
+compare against the current baseline to see which strategy choices would change.

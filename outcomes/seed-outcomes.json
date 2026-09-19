@@ -1,0 +1,13 @@
+[
+  {
+    "actual_minutes": 70,
+    "actual_tokens": 7600,
+    "graph_id": "tight-research-seed",
+    "missed_optional_harm": 0.4,
+    "observed_quality": 0.7,
+    "strategy": "budget-pruning-v0",
+    "target_quality": 0.8,
+    "time_budget_minutes": 65,
+    "token_budget": 7000
+  }
+]

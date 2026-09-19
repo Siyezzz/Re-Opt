@@ -31,6 +31,7 @@ python -m reopt.snapshot benchmark-results/seed-current.json
 python -m reopt.diff previous.json current.json
 python -m reopt.regression
 python -m reopt.regression --check
+python -m reopt.outcomes outcomes/seed-outcomes.json
 python -m unittest discover -s tests
 ```
 
