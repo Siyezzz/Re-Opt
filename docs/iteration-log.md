@@ -103,3 +103,33 @@ the budget.
 
 Add a quality penalty for dropping optional work. A scheduler that fits the
 budget is not automatically better if it loses important evidence.
+
+## 2026-09-19 - Meta-Optimization Trace
+
+### Objective
+
+Record not just strategy outputs, but how Re-Opt solves the optimization
+problem.
+
+### Implementation
+
+Added:
+
+- `OptimizationDecision` and `OptimizationRun`
+- `solve_optimization`, which compares candidate schedulers and selects one
+  using an explicit utility function
+- `format_optimization_run`, which explains model, candidate generation,
+  scoring, selection, and next refinement
+- `reopt.journal`, which renders optimization runs as Markdown
+- `docs/optimization-runs.md`, the first persisted run journal
+
+### Observed Result
+
+The tight-budget benchmark now selects `budget-pruning-v0` because it fits hard
+budgets with higher utility than the over-budget greedy baseline. Normal
+benchmarks select the simpler greedy baseline because pruning changes nothing.
+
+### Next Refinement
+
+Make the journal append real run results automatically and add a commit-to-commit
+comparison so Re-Opt can track whether each revolution improved the optimizer.

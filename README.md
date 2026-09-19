@@ -24,6 +24,7 @@ strategy better or worse.
 ```bash
 python -m reopt.cli
 python -m reopt.compare
+python -m reopt.journal
 python -m unittest discover -s tests
 ```
 
@@ -32,6 +33,8 @@ The current implementation is intentionally small:
 - `reopt.models` defines task graphs, constraints, roles, and schedule plans
 - `reopt.scheduler` contains the first critical-path/A*-style heuristic
 - `reopt.compare` compares baseline and budget-aware strategies
+- `reopt.optimizer` records how a strategy is selected
+- `reopt.journal` renders optimization runs as Markdown
 - `reopt.benchmarks` contains seed tasks for early comparisons
 - `tests` checks that the seed plans are valid enough to iterate on
 

@@ -116,3 +116,22 @@ class PlanScore:
     covered_value: float
     covered_risk: float
     warnings: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class OptimizationDecision:
+    step: str
+    choice: str
+    rationale: str
+
+
+@dataclass(frozen=True)
+class OptimizationRun:
+    run_id: str
+    objective: str
+    constraints: ConstraintSet
+    candidate_scores: tuple[PlanScore, ...]
+    selected_strategy: str
+    selected_reason: str
+    decisions: tuple[OptimizationDecision, ...]
+    next_refinement: str

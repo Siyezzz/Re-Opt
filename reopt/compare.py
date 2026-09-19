@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from .benchmarks import load_seed_benchmarks
 from .evaluate import score_plan
+from .optimizer import format_optimization_run, solve_optimization
 from .scheduler import BudgetPruningScheduler, HeuristicScheduler
 
 
@@ -26,6 +27,11 @@ def main() -> None:
             )
             for warning in score.warnings:
                 print(f"  warning: {warning}")
+        print()
+
+    print("# Optimization traces")
+    for graph, constraints in load_seed_benchmarks():
+        print(format_optimization_run(solve_optimization(graph, constraints)))
         print()
 
 
