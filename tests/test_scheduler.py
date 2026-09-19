@@ -19,6 +19,7 @@ from reopt.export import export_seed_runs_json
 from reopt.diff import diff_exports
 from reopt.snapshot import write_seed_snapshot
 from reopt.regression import check_seed_baseline, compare_seed_baseline
+from reopt.calibrate import preview_calibration
 from reopt.outcomes import (
     OutcomeRecord,
     calibration_report,
@@ -201,6 +202,29 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertEqual(loaded, (outcome,))
         self.assertIn("# Utility Weight Calibration", report)
         self.assertIn("tight-research-seed/budget-pruning-v0", report)
+
+    def test_calibration_preview_reports_regression_diff(self) -> None:
+        outcome = OutcomeRecord(
+            graph_id="tight-research-seed",
+            strategy="budget-pruning-v0",
+            observed_quality=0.7,
+            target_quality=0.8,
+            actual_tokens=7600,
+            token_budget=7000,
+            actual_minutes=70,
+            time_budget_minutes=65,
+            missed_optional_harm=0.4,
+        )
+        with TemporaryDirectory() as tmp:
+            outcomes_path = Path(tmp) / "outcomes.json"
+            baseline_path = Path(tmp) / "baseline.json"
+            dump_outcomes(outcomes_path, (outcome,))
+            write_seed_snapshot(baseline_path)
+
+            report = preview_calibration(outcomes_path, baseline_path)
+
+        self.assertIn("# Proposed Weight Regression Preview", report)
+        self.assertIn("utility_delta:", report)
 
 
 if __name__ == "__main__":

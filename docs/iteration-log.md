@@ -412,3 +412,28 @@ research outcome. Defaults remain unchanged.
 
 Run proposed weights through benchmark exports without adopting them, then
 compare against the current baseline to see which strategy choices would change.
+
+## 2026-09-19 - Calibration Preview
+
+### Objective
+
+Evaluate proposed utility weights before adopting them.
+
+### Implementation
+
+Added `python -m reopt.calibrate outcomes/seed-outcomes.json`, which:
+
+1. loads outcome records
+2. proposes new utility weights
+3. exports seed runs under those proposed weights
+4. diffs the proposed-weight export against the committed baseline
+
+### Observed Result
+
+The preview shows which benchmark utilities or strategy choices would change
+without mutating defaults or refreshing the baseline.
+
+### Next Refinement
+
+Add an approval path that can adopt proposed weights only after the regression
+preview is reviewed and committed with an explicit baseline update.

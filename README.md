@@ -32,6 +32,7 @@ python -m reopt.diff previous.json current.json
 python -m reopt.regression
 python -m reopt.regression --check
 python -m reopt.outcomes outcomes/seed-outcomes.json
+python -m reopt.calibrate outcomes/seed-outcomes.json
 python -m unittest discover -s tests
 ```
 
@@ -47,6 +48,7 @@ The current implementation is intentionally small:
 - `reopt.diff` compares two JSON exports
 - `reopt.regression` compares current seed output against the committed baseline
 - `reopt.outcomes` proposes utility-weight updates from observed outcomes
+- `reopt.calibrate` previews proposed weights against the regression baseline
 - `reopt.benchmarks` contains seed tasks for early comparisons
 - `tests` checks that the seed plans are valid enough to iterate on
 - GitHub Actions runs tests and the regression gate on push and pull requests
