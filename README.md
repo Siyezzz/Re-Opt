@@ -26,6 +26,7 @@ python -m reopt.cli
 python -m reopt.compare
 python -m reopt.journal
 python -m reopt.journal --append docs/optimization-runs.md
+python -m reopt.export
 python -m unittest discover -s tests
 ```
 
@@ -36,6 +37,7 @@ The current implementation is intentionally small:
 - `reopt.compare` compares baseline and budget-aware strategies
 - `reopt.optimizer` records how a strategy is selected
 - `reopt.journal` renders optimization runs as Markdown
+- `reopt.export` renders optimization runs as JSON for future evaluation
 - `reopt.benchmarks` contains seed tasks for early comparisons
 - `tests` checks that the seed plans are valid enough to iterate on
 

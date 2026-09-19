@@ -157,3 +157,28 @@ Tests cover both modes.
 
 Prevent duplicate entries for the same benchmark/date pair and add structured
 JSON output for machine comparison.
+
+## 2026-09-19 - JSON Optimization Export
+
+### Objective
+
+Make optimization records machine-readable so future evaluators can compare
+strategy choices across commits.
+
+### Implementation
+
+Added:
+
+- `optimization_run_to_dict`
+- `reopt.export`
+- JSON export test coverage
+
+### Observed Result
+
+Seed benchmark runs can now be exported as stable JSON with candidate scores,
+selected strategy, decision trace, and next refinement.
+
+### Next Refinement
+
+Add a comparator that reads two JSON exports and reports strategy changes,
+utility deltas, and regressions.

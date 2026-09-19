@@ -1,4 +1,5 @@
 import unittest
+import json
 from datetime import date
 from tempfile import TemporaryDirectory
 from pathlib import Path
@@ -13,6 +14,7 @@ from reopt import (
 )
 from reopt.journal import render_seed_journal
 from reopt.journal import append_seed_journal
+from reopt.export import export_seed_runs_json
 
 
 class HeuristicSchedulerTest(unittest.TestCase):
@@ -74,6 +76,14 @@ class HeuristicSchedulerTest(unittest.TestCase):
 
         self.assertIn("## 2026-09-19 - Seed Strategy Selection", content)
         self.assertIn("## 2026-09-20 - Seed Strategy Selection", content)
+
+    def test_seed_runs_export_as_json(self) -> None:
+        data = json.loads(export_seed_runs_json())
+
+        self.assertEqual(len(data), 3)
+        self.assertIn("candidate_scores", data[0])
+        self.assertIn("selected_strategy", data[0])
+        self.assertEqual(data[2]["selected_strategy"], "budget-pruning-v0")
 
 
 if __name__ == "__main__":

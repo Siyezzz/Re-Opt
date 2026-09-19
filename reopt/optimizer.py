@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
+
 from .evaluate import score_plan
 from .models import (
     ConstraintSet,
@@ -111,6 +113,12 @@ def format_optimization_run(run: OptimizationRun) -> str:
         lines.append(f"- {decision.step}: {decision.choice} | {decision.rationale}")
     lines.append(f"next_refinement: {run.next_refinement}")
     return "\n".join(lines)
+
+
+def optimization_run_to_dict(run: OptimizationRun) -> dict[str, object]:
+    data = asdict(run)
+    data["constraints"] = asdict(run.constraints)
+    return data
 
 
 def _utility(
