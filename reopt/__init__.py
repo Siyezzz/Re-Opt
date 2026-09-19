@@ -13,6 +13,7 @@ from .models import (
     UtilityWeights,
 )
 from .optimizer import format_optimization_run, optimization_run_to_dict, solve_optimization
+from .outcomes import OutcomeRecord, propose_utility_weights
 from .scheduler import BudgetPruningScheduler, HeuristicScheduler
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "HeuristicScheduler",
     "OptimizationDecision",
     "OptimizationRun",
+    "OutcomeRecord",
     "PlanScore",
     "SchedulePlan",
     "TaskGraph",
@@ -30,5 +32,6 @@ __all__ = [
     "format_optimization_run",
     "load_seed_benchmarks",
     "optimization_run_to_dict",
+    "propose_utility_weights",
     "solve_optimization",
 ]

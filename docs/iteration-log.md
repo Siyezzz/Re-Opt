@@ -358,3 +358,31 @@ configuration needed for future comparison and calibration.
 
 Add outcome records and a calibration routine that proposes utility-weight
 updates from observed quality, cost, and risk results.
+
+## 2026-09-19 - Outcome-Based Weight Proposal
+
+### Objective
+
+Start connecting observed task outcomes back into optimizer weights.
+
+### Implementation
+
+Added:
+
+- `OutcomeRecord`
+- `propose_utility_weights`
+
+The proposal function is intentionally conservative and does not mutate default
+weights. It suggests higher quality, token, minute, or missed-optional penalties
+only when observed outcomes show quality gaps, overruns, or harm from omitted
+optional work.
+
+### Observed Result
+
+Tests verify that a low-quality, over-budget, over-time outcome with optional
+evidence harm increases the relevant weights.
+
+### Next Refinement
+
+Persist outcome records and compare proposed weights against the current default
+weights using the regression gate before adopting them.

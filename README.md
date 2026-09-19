@@ -45,6 +45,7 @@ The current implementation is intentionally small:
 - `reopt.snapshot` writes JSON exports to a file
 - `reopt.diff` compares two JSON exports
 - `reopt.regression` compares current seed output against the committed baseline
+- `reopt.outcomes` proposes utility-weight updates from observed outcomes
 - `reopt.benchmarks` contains seed tasks for early comparisons
 - `tests` checks that the seed plans are valid enough to iterate on
 - GitHub Actions runs tests and the regression gate on push and pull requests

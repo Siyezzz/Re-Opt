@@ -8,10 +8,13 @@ from reopt import (
     AgentRole,
     BudgetPruningScheduler,
     HeuristicScheduler,
+    OutcomeRecord,
     format_optimization_run,
     load_seed_benchmarks,
+    propose_utility_weights,
     solve_optimization,
 )
+from reopt.models import UtilityWeights
 from reopt.journal import render_seed_journal
 from reopt.journal import append_seed_journal
 from reopt.export import export_seed_runs_json
@@ -147,6 +150,27 @@ class HeuristicSchedulerTest(unittest.TestCase):
 
         self.assertFalse(ok)
         self.assertTrue(any("utility dropped" in failure for failure in failures))
+
+    def test_outcomes_propose_conservative_weight_updates(self) -> None:
+        base = UtilityWeights()
+        outcome = OutcomeRecord(
+            graph_id="tight-research-seed",
+            strategy="budget-pruning-v0",
+            observed_quality=0.7,
+            target_quality=0.8,
+            actual_tokens=7600,
+            token_budget=7000,
+            actual_minutes=70,
+            time_budget_minutes=65,
+            missed_optional_harm=0.4,
+        )
+
+        proposed = propose_utility_weights(base, (outcome,))
+
+        self.assertGreater(proposed.quality, base.quality)
+        self.assertGreater(proposed.token, base.token)
+        self.assertGreater(proposed.minute, base.minute)
+        self.assertGreater(proposed.missed_optional, base.missed_optional)
 
 
 if __name__ == "__main__":
