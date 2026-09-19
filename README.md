@@ -47,6 +47,7 @@ The current implementation is intentionally small:
 - `reopt.regression` compares current seed output against the committed baseline
 - `reopt.benchmarks` contains seed tasks for early comparisons
 - `tests` checks that the seed plans are valid enough to iterate on
+- GitHub Actions runs tests and the regression gate on push and pull requests
 
 ## Core Idea
 

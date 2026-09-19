@@ -279,3 +279,29 @@ claims a higher utility than the current optimizer can reproduce.
 ### Next Refinement
 
 Add a small CI workflow that runs tests and the regression gate on every push.
+
+## 2026-09-19 - CI Regression Gate
+
+### Objective
+
+Make optimizer regression checks automatic on GitHub.
+
+### Implementation
+
+Added `.github/workflows/ci.yml`, which runs:
+
+```bash
+python -m unittest discover -s tests
+python -m reopt.regression --check
+```
+
+on push and pull requests.
+
+### Observed Result
+
+The local commands pass before committing the workflow. The remote workflow will
+now provide independent evidence on future pushes and pull requests.
+
+### Next Refinement
+
+Add a badge or CI status note after the first remote run is observed.
