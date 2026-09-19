@@ -15,6 +15,7 @@ from reopt import (
 from reopt.journal import render_seed_journal
 from reopt.journal import append_seed_journal
 from reopt.export import export_seed_runs_json
+from reopt.diff import diff_exports
 
 
 class HeuristicSchedulerTest(unittest.TestCase):
@@ -82,8 +83,21 @@ class HeuristicSchedulerTest(unittest.TestCase):
 
         self.assertEqual(len(data), 3)
         self.assertIn("candidate_scores", data[0])
+        self.assertIn("utility", data[0]["candidate_scores"][0])
         self.assertIn("selected_strategy", data[0])
+        self.assertIn("selected_utility", data[0])
         self.assertEqual(data[2]["selected_strategy"], "budget-pruning-v0")
+
+    def test_export_diff_reports_strategy_and_utility_changes(self) -> None:
+        left = json.loads(export_seed_runs_json())
+        right = json.loads(export_seed_runs_json())
+        right[2]["selected_strategy"] = "experimental-v1"
+        right[2]["selected_utility"] = right[2]["selected_utility"] + 0.5
+
+        diff = diff_exports(left, right)
+
+        self.assertIn("budget-pruning-v0 -> experimental-v1", diff)
+        self.assertIn("utility_delta: +0.500", diff)
 
 
 if __name__ == "__main__":

@@ -182,3 +182,27 @@ selected strategy, decision trace, and next refinement.
 
 Add a comparator that reads two JSON exports and reports strategy changes,
 utility deltas, and regressions.
+
+## 2026-09-19 - JSON Export Diff
+
+### Objective
+
+Compare optimization records across runs or commits.
+
+### Implementation
+
+Added `reopt.diff`, which compares two JSON exports by objective and reports:
+
+- selected strategy changes
+- selected utility delta
+- warning count delta
+
+### Observed Result
+
+The test suite now verifies that a changed selected strategy and utility
+improvement are surfaced in the diff output.
+
+### Next Refinement
+
+Store export snapshots under a stable benchmark-results directory and compare
+the current run against the previous committed snapshot.

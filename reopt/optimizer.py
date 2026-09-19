@@ -118,7 +118,24 @@ def format_optimization_run(run: OptimizationRun) -> str:
 def optimization_run_to_dict(run: OptimizationRun) -> dict[str, object]:
     data = asdict(run)
     data["constraints"] = asdict(run.constraints)
+    data["candidate_scores"] = [
+        {
+            **asdict(score),
+            "utility": round(score_utility(score, run.constraints), 3),
+        }
+        for score in run.candidate_scores
+    ]
+    selected = next(
+        score
+        for score in run.candidate_scores
+        if score.strategy == run.selected_strategy
+    )
+    data["selected_utility"] = round(score_utility(selected, run.constraints), 3)
     return data
+
+
+def score_utility(score: PlanScore, constraints: ConstraintSet) -> float:
+    return _utility(score, constraints)
 
 
 def _utility(
