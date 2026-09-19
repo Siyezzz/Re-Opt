@@ -1,5 +1,7 @@
 import unittest
 from datetime import date
+from tempfile import TemporaryDirectory
+from pathlib import Path
 
 from reopt import (
     AgentRole,
@@ -10,6 +12,7 @@ from reopt import (
     solve_optimization,
 )
 from reopt.journal import render_seed_journal
+from reopt.journal import append_seed_journal
 
 
 class HeuristicSchedulerTest(unittest.TestCase):
@@ -60,6 +63,17 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("## 2026-09-19 - Seed Strategy Selection", journal)
         self.assertIn("Decision trace:", journal)
         self.assertIn("budget-pruning-v0", journal)
+
+    def test_seed_journal_appends_to_file(self) -> None:
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "runs.md"
+
+            append_seed_journal(path, date(2026, 9, 19))
+            append_seed_journal(path, date(2026, 9, 20))
+            content = path.read_text(encoding="utf-8")
+
+        self.assertIn("## 2026-09-19 - Seed Strategy Selection", content)
+        self.assertIn("## 2026-09-20 - Seed Strategy Selection", content)
 
 
 if __name__ == "__main__":

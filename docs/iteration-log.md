@@ -133,3 +133,27 @@ benchmarks select the simpler greedy baseline because pruning changes nothing.
 
 Make the journal append real run results automatically and add a commit-to-commit
 comparison so Re-Opt can track whether each revolution improved the optimizer.
+
+## 2026-09-19 - Appendable Journal
+
+### Objective
+
+Reduce the friction of recording optimization runs.
+
+### Implementation
+
+Added `append_seed_journal`, plus a CLI path:
+
+```bash
+python -m reopt.journal --append docs/optimization-runs.md
+```
+
+### Observed Result
+
+The journal can now be rendered for inspection or appended to a Markdown file.
+Tests cover both modes.
+
+### Next Refinement
+
+Prevent duplicate entries for the same benchmark/date pair and add structured
+JSON output for machine comparison.

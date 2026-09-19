@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import argparse
 from datetime import date
+from pathlib import Path
 
 from .benchmarks import load_seed_benchmarks
 from .optimizer import solve_optimization
@@ -67,8 +69,29 @@ def render_seed_journal(run_date: date | None = None) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def append_seed_journal(path: Path, run_date: date | None = None) -> None:
+    entry = render_seed_journal(run_date)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists() and path.read_text(encoding="utf-8").strip():
+        existing = path.read_text(encoding="utf-8").rstrip()
+        path.write_text(f"{existing}\n\n{entry}", encoding="utf-8")
+    else:
+        path.write_text(entry, encoding="utf-8")
+
+
 def main() -> None:
-    print(render_seed_journal())
+    parser = argparse.ArgumentParser(description="Render or append Re-Opt journals.")
+    parser.add_argument(
+        "--append",
+        type=Path,
+        help="Append the seed journal to a Markdown file instead of printing.",
+    )
+    args = parser.parse_args()
+    if args.append:
+        append_seed_journal(args.append)
+        print(f"appended optimization journal to {args.append}")
+    else:
+        print(render_seed_journal())
 
 
 if __name__ == "__main__":

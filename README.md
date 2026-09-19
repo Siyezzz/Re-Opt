@@ -25,6 +25,7 @@ strategy better or worse.
 python -m reopt.cli
 python -m reopt.compare
 python -m reopt.journal
+python -m reopt.journal --append docs/optimization-runs.md
 python -m unittest discover -s tests
 ```
 
