@@ -68,8 +68,17 @@ def main() -> None:
         default=DEFAULT_BASELINE,
         help="Baseline JSON snapshot path.",
     )
+    parser.add_argument(
+        "--write-report",
+        type=Path,
+        help="Write the adoption checklist to a Markdown file.",
+    )
     args = parser.parse_args()
-    print(adoption_checklist(args.weights, args.baseline))
+    checklist = adoption_checklist(args.weights, args.baseline)
+    if args.write_report:
+        args.write_report.parent.mkdir(parents=True, exist_ok=True)
+        args.write_report.write_text(checklist, encoding="utf-8")
+    print(checklist)
 
 
 if __name__ == "__main__":

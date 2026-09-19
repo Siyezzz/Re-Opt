@@ -229,6 +229,21 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("status: clean", checklist)
         self.assertIn("Required adoption steps:", checklist)
 
+    def test_adoption_checklist_can_be_persisted(self) -> None:
+        with TemporaryDirectory() as tmp:
+            weights_path = Path(tmp) / "weights.json"
+            baseline_path = Path(tmp) / "baseline.json"
+            report_path = Path(tmp) / "adoption.md"
+            dump_utility_weights(weights_path, UtilityWeights())
+            write_seed_snapshot(baseline_path)
+
+            report = adoption_checklist(weights_path, baseline_path)
+            report_path.write_text(report, encoding="utf-8")
+            content = report_path.read_text(encoding="utf-8")
+
+        self.assertIn("status: clean", content)
+        self.assertIn("# Optimization Export Diff", content)
+
     def test_calibration_preview_reports_regression_diff(self) -> None:
         outcome = OutcomeRecord(
             graph_id="tight-research-seed",

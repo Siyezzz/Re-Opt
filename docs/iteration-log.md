@@ -488,3 +488,27 @@ baseline updates without mutating defaults automatically.
 
 Persist proposed-weight files in a dedicated `weights/` directory only after
 their adoption checklist is reviewed.
+
+## 2026-09-19 - Persistable Adoption Reports
+
+### Objective
+
+Make utility-weight adoption review evidence persistable.
+
+### Implementation
+
+Added:
+
+```bash
+python -m reopt.adopt weights/proposed-seed.json --write-report adoption-reports/proposed-seed.md
+```
+
+### Observed Result
+
+Adoption checklists can now be written as Markdown reports while still printing
+to stdout. Tests cover report persistence with temporary files.
+
+### Next Refinement
+
+Generate a blocked seed adoption report from `outcomes/seed-outcomes.json` and
+commit it as an example review artifact.

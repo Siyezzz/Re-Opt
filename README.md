@@ -36,6 +36,7 @@ python -m reopt.outcomes outcomes/seed-outcomes.json --write-weights weights/pro
 python -m reopt.calibrate outcomes/seed-outcomes.json
 python -m reopt.export --weights weights/proposed-seed.json
 python -m reopt.adopt weights/proposed-seed.json
+python -m reopt.adopt weights/proposed-seed.json --write-report adoption-reports/proposed-seed.md
 python -m unittest discover -s tests
 ```
 
@@ -52,6 +53,7 @@ The current implementation is intentionally small:
 - `reopt.regression` compares current seed output against the committed baseline
 - `reopt.outcomes` proposes utility-weight updates from observed outcomes
 - `reopt.calibrate` previews proposed weights against the regression baseline
+- `reopt.adopt` produces a review checklist for proposed utility weights
 - `reopt.benchmarks` contains seed tasks for early comparisons
 - `tests` checks that the seed plans are valid enough to iterate on
 - GitHub Actions runs tests and the regression gate on push and pull requests
