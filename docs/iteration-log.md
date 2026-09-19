@@ -512,3 +512,28 @@ to stdout. Tests cover report persistence with temporary files.
 
 Generate a blocked seed adoption report from `outcomes/seed-outcomes.json` and
 commit it as an example review artifact.
+
+## 2026-09-19 - Seed Adoption Review Artifact
+
+### Objective
+
+Commit a concrete proposed-weight review artifact.
+
+### Implementation
+
+Generated:
+
+- `weights/proposed-seed.json`
+- `adoption-reports/proposed-seed.md`
+
+### Observed Result
+
+The proposed seed weights are blocked because tight-budget research utility
+drops by `-0.029`, even though the selected strategy is unchanged. This is a
+useful example of the adoption gate refusing a plausible but not-yet-approved
+objective-function change.
+
+### Next Refinement
+
+Add a small report index that summarizes active proposed weights, clean reports,
+and blocked reports.
