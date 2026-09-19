@@ -35,6 +35,7 @@ python -m reopt.outcomes outcomes/seed-outcomes.json
 python -m reopt.outcomes outcomes/seed-outcomes.json --write-weights weights/proposed-seed.json
 python -m reopt.calibrate outcomes/seed-outcomes.json
 python -m reopt.export --weights weights/proposed-seed.json
+python -m reopt.adopt weights/proposed-seed.json
 python -m unittest discover -s tests
 ```
 

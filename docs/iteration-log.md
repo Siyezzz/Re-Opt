@@ -462,3 +462,29 @@ the default optimizer remains unchanged.
 
 Add a command that compares a proposed-weight export against the baseline and
 emits an adoption checklist.
+
+## 2026-09-19 - Utility Weight Adoption Checklist
+
+### Objective
+
+Prevent proposed utility weights from being adopted without a review trail.
+
+### Implementation
+
+Added `python -m reopt.adopt weights/proposed-seed.json`, which:
+
+- loads proposed utility weights
+- exports seed benchmark runs under those weights
+- compares the export against the committed baseline
+- reports clean or blocked adoption status
+- prints required adoption steps
+
+### Observed Result
+
+The checklist provides a reviewable bridge from proposed weights to intentional
+baseline updates without mutating defaults automatically.
+
+### Next Refinement
+
+Persist proposed-weight files in a dedicated `weights/` directory only after
+their adoption checklist is reviewed.

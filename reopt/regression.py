@@ -29,7 +29,7 @@ def check_seed_baseline(
     baseline = load_export(baseline_path)
     current: list[dict[str, Any]] = json.loads(export_seed_runs_json())
     diff = diff_exports(baseline, current)
-    failures = _find_failures(
+    failures = find_regression_failures(
         baseline,
         current,
         allow_strategy_change=allow_strategy_change,
@@ -80,7 +80,7 @@ def main() -> None:
     print(compare_seed_baseline(args.baseline))
 
 
-def _find_failures(
+def find_regression_failures(
     baseline: list[dict[str, Any]],
     current: list[dict[str, Any]],
     *,
