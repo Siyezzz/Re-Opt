@@ -255,3 +255,27 @@ the current optimizer matches the committed baseline.
 
 Make regression output fail with a non-zero exit code when utility drops,
 warnings increase, or selected strategies change without an explicit approval.
+
+## 2026-09-19 - Regression Gate
+
+### Objective
+
+Make baseline comparison enforceable, not just informational.
+
+### Implementation
+
+Added `python -m reopt.regression --check`, which exits non-zero when:
+
+- selected strategy changes without `--allow-strategy-change`
+- selected utility drops
+- candidate warnings increase without `--allow-warning-increase`
+- objectives are added or removed
+
+### Observed Result
+
+Tests now verify both the passing path and a failing path where the baseline
+claims a higher utility than the current optimizer can reproduce.
+
+### Next Refinement
+
+Add a small CI workflow that runs tests and the regression gate on every push.

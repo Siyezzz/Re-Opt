@@ -17,7 +17,7 @@ from reopt.journal import append_seed_journal
 from reopt.export import export_seed_runs_json
 from reopt.diff import diff_exports
 from reopt.snapshot import write_seed_snapshot
-from reopt.regression import compare_seed_baseline
+from reopt.regression import check_seed_baseline, compare_seed_baseline
 
 
 class HeuristicSchedulerTest(unittest.TestCase):
@@ -121,6 +121,29 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("# Optimization Export Diff", diff)
         self.assertIn("strategy: unchanged", diff)
         self.assertIn("utility_delta: +0.000", diff)
+
+    def test_regression_gate_passes_matching_baseline(self) -> None:
+        with TemporaryDirectory() as tmp:
+            baseline = Path(tmp) / "seed-baseline.json"
+            write_seed_snapshot(baseline)
+
+            ok, failures, _ = check_seed_baseline(baseline)
+
+        self.assertTrue(ok)
+        self.assertEqual(failures, [])
+
+    def test_regression_gate_fails_utility_drop(self) -> None:
+        with TemporaryDirectory() as tmp:
+            baseline = Path(tmp) / "seed-baseline.json"
+            write_seed_snapshot(baseline)
+            data = json.loads(baseline.read_text(encoding="utf-8"))
+            data[0]["selected_utility"] = data[0]["selected_utility"] + 0.25
+            baseline.write_text(json.dumps(data), encoding="utf-8")
+
+            ok, failures, _ = check_seed_baseline(baseline)
+
+        self.assertFalse(ok)
+        self.assertTrue(any("utility dropped" in failure for failure in failures))
 
 
 if __name__ == "__main__":
