@@ -21,6 +21,7 @@ from reopt.snapshot import write_seed_snapshot
 from reopt.regression import check_seed_baseline, compare_seed_baseline
 from reopt.adopt import adoption_checklist
 from reopt.calibrate import preview_calibration
+from reopt.report_index import render_adoption_index
 from reopt.outcomes import (
     OutcomeRecord,
     calibration_report,
@@ -243,6 +244,30 @@ class HeuristicSchedulerTest(unittest.TestCase):
 
         self.assertIn("status: clean", content)
         self.assertIn("# Optimization Export Diff", content)
+
+    def test_adoption_report_index_summarizes_reports(self) -> None:
+        with TemporaryDirectory() as tmp:
+            report_dir = Path(tmp) / "adoption-reports"
+            report_dir.mkdir()
+            report_path = report_dir / "proposed.md"
+            report_path.write_text(
+                "\n".join(
+                    [
+                        "# Utility Weight Adoption Checklist",
+                        "",
+                        "weights: weights/proposed.json",
+                        "baseline: benchmark-results/seed-baseline.json",
+                        "status: blocked",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            index = render_adoption_index(report_dir)
+
+        self.assertIn("# Adoption Report Index", index)
+        self.assertIn("blocked", index)
+        self.assertIn("weights/proposed.json", index)
 
     def test_calibration_preview_reports_regression_diff(self) -> None:
         outcome = OutcomeRecord(

@@ -537,3 +537,28 @@ objective-function change.
 
 Add a small report index that summarizes active proposed weights, clean reports,
 and blocked reports.
+
+## 2026-09-19 - Adoption Report Index
+
+### Objective
+
+Make proposed utility-weight review state easy to scan.
+
+### Implementation
+
+Added:
+
+```bash
+python -m reopt.report_index --write docs/adoption-index.md
+```
+
+The command scans `adoption-reports/*.md` and renders a table with report path,
+status, weight file, and baseline.
+
+### Observed Result
+
+The current index shows `adoption-reports/proposed-seed.md` as `blocked`.
+
+### Next Refinement
+
+Add this index command to CI so adoption reports and their summary cannot drift.
