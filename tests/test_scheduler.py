@@ -24,7 +24,9 @@ from reopt.outcomes import (
     OutcomeRecord,
     calibration_report,
     dump_outcomes,
+    dump_utility_weights,
     load_outcomes,
+    load_utility_weights,
     propose_utility_weights,
 )
 
@@ -202,6 +204,16 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertEqual(loaded, (outcome,))
         self.assertIn("# Utility Weight Calibration", report)
         self.assertIn("tight-research-seed/budget-pruning-v0", report)
+
+    def test_utility_weights_round_trip(self) -> None:
+        weights = UtilityWeights(quality=1.05, missed_optional=0.45)
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "weights.json"
+
+            dump_utility_weights(path, weights)
+            loaded = load_utility_weights(path)
+
+        self.assertEqual(loaded, weights)
 
     def test_calibration_preview_reports_regression_diff(self) -> None:
         outcome = OutcomeRecord(

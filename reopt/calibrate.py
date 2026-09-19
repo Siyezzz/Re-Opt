@@ -10,7 +10,12 @@ from typing import Any
 from .diff import diff_exports, load_export
 from .export import export_seed_runs_json
 from .models import UtilityWeights
-from .outcomes import calibration_report, load_outcomes, propose_utility_weights
+from .outcomes import (
+    calibration_report,
+    dump_utility_weights,
+    load_outcomes,
+    propose_utility_weights,
+)
 from .regression import DEFAULT_BASELINE
 
 
@@ -44,7 +49,16 @@ def main() -> None:
         default=DEFAULT_BASELINE,
         help="Baseline JSON snapshot path.",
     )
+    parser.add_argument(
+        "--write-weights",
+        type=Path,
+        help="Write proposed utility weights to a JSON file.",
+    )
     args = parser.parse_args()
+    if args.write_weights:
+        outcomes = load_outcomes(args.outcomes)
+        proposed = propose_utility_weights(UtilityWeights(), outcomes)
+        dump_utility_weights(args.write_weights, proposed)
     print(preview_calibration(args.outcomes, args.baseline))
 
 

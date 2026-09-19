@@ -34,6 +34,19 @@ def dump_outcomes(path: Path, outcomes: tuple[OutcomeRecord, ...]) -> None:
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def load_utility_weights(path: Path) -> UtilityWeights:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return UtilityWeights.from_dict(data)
+
+
+def dump_utility_weights(path: Path, weights: UtilityWeights) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(weights.to_dict(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
 def propose_utility_weights(
     base: UtilityWeights,
     outcomes: tuple[OutcomeRecord, ...],
@@ -124,10 +137,17 @@ def main() -> None:
         description="Propose Re-Opt utility weight updates from outcome records."
     )
     parser.add_argument("outcomes", type=Path, help="Outcome JSON file.")
+    parser.add_argument(
+        "--write-weights",
+        type=Path,
+        help="Write proposed utility weights to a JSON file.",
+    )
     args = parser.parse_args()
     records = load_outcomes(args.outcomes)
     base = UtilityWeights()
     proposed = propose_utility_weights(base, records)
+    if args.write_weights:
+        dump_utility_weights(args.write_weights, proposed)
     print(calibration_report(base, proposed, records))
 
 

@@ -437,3 +437,28 @@ without mutating defaults or refreshing the baseline.
 
 Add an approval path that can adopt proposed weights only after the regression
 preview is reviewed and committed with an explicit baseline update.
+
+## 2026-09-19 - Proposed Weight Files
+
+### Objective
+
+Make proposed utility weights portable without adopting them as defaults.
+
+### Implementation
+
+Added:
+
+- `UtilityWeights.to_dict` and `UtilityWeights.from_dict`
+- utility-weight JSON load/dump helpers
+- `python -m reopt.outcomes outcomes/seed-outcomes.json --write-weights weights/proposed-seed.json`
+- `python -m reopt.export --weights weights/proposed-seed.json`
+
+### Observed Result
+
+Proposed weights can now be saved, loaded, and used for benchmark exports while
+the default optimizer remains unchanged.
+
+### Next Refinement
+
+Add a command that compares a proposed-weight export against the baseline and
+emits an adoption checklist.

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 
 
@@ -34,6 +34,13 @@ class UtilityWeights:
     missed_optional: float = 0.25
     token_overrun_multiplier: float = 4.0
     minute_overrun: float = 0.08
+
+    def to_dict(self) -> dict[str, float]:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, float]) -> "UtilityWeights":
+        return cls(**data)
 
 
 @dataclass(frozen=True)
