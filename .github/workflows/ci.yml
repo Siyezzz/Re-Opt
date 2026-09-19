@@ -21,3 +21,8 @@ jobs:
 
       - name: Run optimization regression gate
         run: python -m reopt.regression --check
+
+      - name: Check adoption index freshness
+        run: |
+          python -m reopt.report_index --write docs/adoption-index.md
+          git diff --exit-code docs/adoption-index.md

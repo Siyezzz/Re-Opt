@@ -562,3 +562,28 @@ The current index shows `adoption-reports/proposed-seed.md` as `blocked`.
 ### Next Refinement
 
 Add this index command to CI so adoption reports and their summary cannot drift.
+
+## 2026-09-19 - Adoption Index CI Check
+
+### Objective
+
+Prevent adoption reports and their committed index from drifting.
+
+### Implementation
+
+Updated GitHub Actions to run:
+
+```bash
+python -m reopt.report_index --write docs/adoption-index.md
+git diff --exit-code docs/adoption-index.md
+```
+
+### Observed Result
+
+The same freshness check passes locally after regenerating the index. Future pull
+requests that edit adoption reports without updating the index should fail CI.
+
+### Next Refinement
+
+After quota resets, add a lightweight command that explains the next best
+refinement target from the iteration log and current blocked artifacts.
