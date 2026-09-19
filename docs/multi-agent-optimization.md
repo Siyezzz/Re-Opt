@@ -145,6 +145,21 @@ priority(v) =
 For a constrained run, prioritize tasks with high blocking score and high
 information gain. For a generous run, also explore alternative decompositions.
 
+The current code prototype implements this as `critical-path-a-star-v0`.
+
+```text
+priority(v) =
+  value(v)
+  + risk(v)
+  + uncertainty(v)
+  + 0.35 * downstream_dependents(v)
+  - token_cost(v) / 4000
+  - time_cost_minutes(v) / 120
+```
+
+This is not yet calibrated. It is a deliberately inspectable baseline that can
+be beaten by later strategies.
+
 ## 6. SEA Self-Evolution Loop
 
 SEA should not merely store conclusions. It should store task-conditioned
@@ -203,3 +218,26 @@ a single agent.
 - Can a memory layer learn role assignment policies without overfitting?
 - What is the minimum evidence needed before SEA promotes a strategy?
 - How do we represent partial failures so they become useful training signals?
+
+## 9. Next Algorithm Candidates
+
+### Beam Scheduler
+
+Keep the top `k` partial schedules instead of committing to one greedy path.
+This should help when there are multiple plausible decompositions.
+
+### Budget-Aware Pruner
+
+Drop or compress low-value nodes when the estimated plan exceeds token or time
+budgets. This should help small tasks avoid over-coordination.
+
+### Bandit Role Selector
+
+Track which role performs best for each task feature vector, then allocate more
+future subtasks to winning roles. This is where SEA can become the memory layer
+for task-conditioned optimization.
+
+### Verification-Aware Scheduler
+
+Treat verification as a first-class node, not an afterthought. High-risk tasks
+should reserve budget for Critic and Verifier before Builder consumes it all.

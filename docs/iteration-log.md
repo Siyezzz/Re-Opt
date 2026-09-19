@@ -39,3 +39,67 @@ writing, debugging, and planning. For each task, compare:
 - breadth-first discovery followed by parallel execution
 
 Track quality, time, token use, number of corrections, and user satisfaction.
+
+## 2026-09-19 - Executable Seed
+
+### Objective
+
+Move from conceptual notes to a runnable optimizer prototype.
+
+### Implementation
+
+Added:
+
+- task graph, task node, constraint, role, and schedule plan models
+- `critical-path-a-star-v0` heuristic scheduler
+- two seed benchmark graphs
+- CLI output for inspecting schedules
+- unit tests for basic schedule validity
+
+### Working Hypothesis
+
+An inspectable heuristic baseline is better than a purely conceptual framework
+because every future refinement can compare against it.
+
+### Expected Weakness
+
+The prototype is still greedy. It does not yet:
+
+- estimate parallel wall-clock time
+- prune plans when budgets are exceeded
+- compare multiple candidate schedules
+- learn role weights from SEA outcomes
+- score final task quality
+
+### Next Refinement
+
+Add at least one alternative scheduler and a benchmark runner that compares
+strategies on the same task graphs.
+
+## 2026-09-19 - First Strategy Comparison
+
+### Objective
+
+Make Re-Opt compare more than one scheduling strategy.
+
+### Implementation
+
+Added:
+
+- `budget-pruning-v0`, a scheduler that removes optional low-priority work when
+  the plan exceeds token or time budgets
+- a tight-budget research benchmark
+- plan scoring with serial minutes, parallel minutes, covered value, and covered
+  risk
+- `python -m reopt.compare` for side-by-side strategy output
+
+### Observed Result
+
+On the tight research benchmark, the greedy baseline exceeded the token budget.
+The budget-pruning scheduler dropped the optional secondary sweep and fit within
+the budget.
+
+### Next Refinement
+
+Add a quality penalty for dropping optional work. A scheduler that fits the
+budget is not automatically better if it loses important evidence.

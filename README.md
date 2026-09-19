@@ -19,6 +19,22 @@ strategy better or worse.
 - [Multi-agent optimization frame](docs/multi-agent-optimization.md)
 - [Iteration log](docs/iteration-log.md)
 
+## Run The Seed Optimizer
+
+```bash
+python -m reopt.cli
+python -m reopt.compare
+python -m unittest discover -s tests
+```
+
+The current implementation is intentionally small:
+
+- `reopt.models` defines task graphs, constraints, roles, and schedule plans
+- `reopt.scheduler` contains the first critical-path/A*-style heuristic
+- `reopt.compare` compares baseline and budget-aware strategies
+- `reopt.benchmarks` contains seed tasks for early comparisons
+- `tests` checks that the seed plans are valid enough to iterate on
+
 ## Core Idea
 
 A task can be modeled as a dependency graph:
