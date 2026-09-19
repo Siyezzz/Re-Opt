@@ -206,3 +206,28 @@ improvement are surfaced in the diff output.
 
 Store export snapshots under a stable benchmark-results directory and compare
 the current run against the previous committed snapshot.
+
+## 2026-09-19 - Snapshot Writer
+
+### Objective
+
+Make JSON exports persistent so they can be compared later.
+
+### Implementation
+
+Added `reopt.snapshot`:
+
+```bash
+python -m reopt.snapshot benchmark-results/seed-current.json
+```
+
+### Observed Result
+
+The snapshot writer creates parent directories and writes the current seed
+optimization export as JSON. Tests verify the file can be parsed back and keeps
+the expected selected strategy for the tight-budget benchmark.
+
+### Next Refinement
+
+Commit a baseline snapshot and add a command that compares the current generated
+snapshot against the committed baseline.

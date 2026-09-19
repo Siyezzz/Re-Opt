@@ -16,6 +16,7 @@ from reopt.journal import render_seed_journal
 from reopt.journal import append_seed_journal
 from reopt.export import export_seed_runs_json
 from reopt.diff import diff_exports
+from reopt.snapshot import write_seed_snapshot
 
 
 class HeuristicSchedulerTest(unittest.TestCase):
@@ -98,6 +99,16 @@ class HeuristicSchedulerTest(unittest.TestCase):
 
         self.assertIn("budget-pruning-v0 -> experimental-v1", diff)
         self.assertIn("utility_delta: +0.500", diff)
+
+    def test_seed_snapshot_writes_json_file(self) -> None:
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "snapshots" / "seed.json"
+
+            write_seed_snapshot(path)
+            data = json.loads(path.read_text(encoding="utf-8"))
+
+        self.assertEqual(len(data), 3)
+        self.assertEqual(data[2]["selected_strategy"], "budget-pruning-v0")
 
 
 if __name__ == "__main__":
