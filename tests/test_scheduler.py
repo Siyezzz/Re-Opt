@@ -17,6 +17,7 @@ from reopt.journal import append_seed_journal
 from reopt.export import export_seed_runs_json
 from reopt.diff import diff_exports
 from reopt.snapshot import write_seed_snapshot
+from reopt.regression import compare_seed_baseline
 
 
 class HeuristicSchedulerTest(unittest.TestCase):
@@ -109,6 +110,17 @@ class HeuristicSchedulerTest(unittest.TestCase):
 
         self.assertEqual(len(data), 3)
         self.assertEqual(data[2]["selected_strategy"], "budget-pruning-v0")
+
+    def test_regression_compares_current_against_baseline(self) -> None:
+        with TemporaryDirectory() as tmp:
+            baseline = Path(tmp) / "seed-baseline.json"
+            write_seed_snapshot(baseline)
+
+            diff = compare_seed_baseline(baseline)
+
+        self.assertIn("# Optimization Export Diff", diff)
+        self.assertIn("strategy: unchanged", diff)
+        self.assertIn("utility_delta: +0.000", diff)
 
 
 if __name__ == "__main__":

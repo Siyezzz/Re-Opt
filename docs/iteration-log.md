@@ -231,3 +231,27 @@ the expected selected strategy for the tight-budget benchmark.
 
 Commit a baseline snapshot and add a command that compares the current generated
 snapshot against the committed baseline.
+
+## 2026-09-19 - Baseline Regression Check
+
+### Objective
+
+Turn snapshot export and diffing into a repeatable regression check.
+
+### Implementation
+
+Added:
+
+- committed seed baseline snapshot
+- `reopt.regression`, which compares the current generated seed export against
+  the baseline
+
+### Observed Result
+
+The regression command reports unchanged strategies and zero utility deltas when
+the current optimizer matches the committed baseline.
+
+### Next Refinement
+
+Make regression output fail with a non-zero exit code when utility drops,
+warnings increase, or selected strategies change without an explicit approval.

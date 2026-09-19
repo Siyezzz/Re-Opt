@@ -1,0 +1,187 @@
+[
+  {
+    "candidate_scores": [
+      {
+        "covered_risk": 3.05,
+        "covered_value": 4.2,
+        "estimated_tokens": 8800,
+        "graph_id": "coding-debug-seed",
+        "parallel_minutes": 90,
+        "serial_minutes": 90,
+        "strategy": "critical-path-a-star-v0",
+        "utility": 1.963,
+        "warnings": []
+      },
+      {
+        "covered_risk": 3.05,
+        "covered_value": 4.2,
+        "estimated_tokens": 8800,
+        "graph_id": "coding-debug-seed",
+        "parallel_minutes": 90,
+        "serial_minutes": 90,
+        "strategy": "budget-pruning-v0",
+        "utility": 1.963,
+        "warnings": []
+      }
+    ],
+    "constraints": {
+      "max_parallel_agents": 3,
+      "quality_target": 0.8,
+      "time_budget_minutes": 90,
+      "token_budget": 12000
+    },
+    "decisions": [
+      {
+        "choice": "task_graph",
+        "rationale": "Represent the task as nodes, dependencies, costs, value, risk, and uncertainty so strategy comparison is inspectable.",
+        "step": "model"
+      },
+      {
+        "choice": "critical-path-a-star-v0, budget-pruning-v0",
+        "rationale": "Compare a greedy baseline against a budget-aware pruning variant.",
+        "step": "generate_candidates"
+      },
+      {
+        "choice": "utility = value - token_cost - latency_cost - risk_cost - violation_penalty",
+        "rationale": "Budget fit matters, but dropped value and residual risk must remain visible.",
+        "step": "score_candidates"
+      },
+      {
+        "choice": "critical-path-a-star-v0",
+        "rationale": "critical-path-a-star-v0 fits hard budgets with value=4.2, risk=3.05, tokens=8800, parallel_minutes=90.",
+        "step": "select"
+      }
+    ],
+    "next_refinement": "Calibrate utility weights with observed task outcomes and add a quality penalty for missing optional evidence.",
+    "objective": "Select a scheduler for: Debug a failing feature and verify the fix",
+    "run_id": "coding-debug-seed:critical-path-a-star-v0",
+    "selected_reason": "critical-path-a-star-v0 fits hard budgets with value=4.2, risk=3.05, tokens=8800, parallel_minutes=90.",
+    "selected_strategy": "critical-path-a-star-v0",
+    "selected_utility": 1.963
+  },
+  {
+    "candidate_scores": [
+      {
+        "covered_risk": 2.75,
+        "covered_value": 4.2,
+        "estimated_tokens": 10900,
+        "graph_id": "research-synthesis-seed",
+        "parallel_minutes": 105,
+        "serial_minutes": 105,
+        "strategy": "critical-path-a-star-v0",
+        "utility": 1.648,
+        "warnings": []
+      },
+      {
+        "covered_risk": 2.75,
+        "covered_value": 4.2,
+        "estimated_tokens": 10900,
+        "graph_id": "research-synthesis-seed",
+        "parallel_minutes": 105,
+        "serial_minutes": 105,
+        "strategy": "budget-pruning-v0",
+        "utility": 1.648,
+        "warnings": []
+      }
+    ],
+    "constraints": {
+      "max_parallel_agents": 3,
+      "quality_target": 0.8,
+      "time_budget_minutes": 120,
+      "token_budget": 16000
+    },
+    "decisions": [
+      {
+        "choice": "task_graph",
+        "rationale": "Represent the task as nodes, dependencies, costs, value, risk, and uncertainty so strategy comparison is inspectable.",
+        "step": "model"
+      },
+      {
+        "choice": "critical-path-a-star-v0, budget-pruning-v0",
+        "rationale": "Compare a greedy baseline against a budget-aware pruning variant.",
+        "step": "generate_candidates"
+      },
+      {
+        "choice": "utility = value - token_cost - latency_cost - risk_cost - violation_penalty",
+        "rationale": "Budget fit matters, but dropped value and residual risk must remain visible.",
+        "step": "score_candidates"
+      },
+      {
+        "choice": "critical-path-a-star-v0",
+        "rationale": "critical-path-a-star-v0 fits hard budgets with value=4.2, risk=2.75, tokens=10900, parallel_minutes=105.",
+        "step": "select"
+      }
+    ],
+    "next_refinement": "Calibrate utility weights with observed task outcomes and add a quality penalty for missing optional evidence.",
+    "objective": "Select a scheduler for: Research a broad question and synthesize a position",
+    "run_id": "research-synthesis-seed:critical-path-a-star-v0",
+    "selected_reason": "critical-path-a-star-v0 fits hard budgets with value=4.2, risk=2.75, tokens=10900, parallel_minutes=105.",
+    "selected_strategy": "critical-path-a-star-v0",
+    "selected_utility": 1.648
+  },
+  {
+    "candidate_scores": [
+      {
+        "covered_risk": 2.55,
+        "covered_value": 3.65,
+        "estimated_tokens": 8800,
+        "graph_id": "tight-research-seed",
+        "parallel_minutes": 58,
+        "serial_minutes": 83,
+        "strategy": "critical-path-a-star-v0",
+        "utility": 1.087,
+        "warnings": [
+          "Estimated tokens 8800 exceed budget 7000.",
+          "Serial estimated minutes 83 exceed budget 65; parallel execution or pruning is required."
+        ]
+      },
+      {
+        "covered_risk": 2.1,
+        "covered_value": 3.2,
+        "estimated_tokens": 6400,
+        "graph_id": "tight-research-seed",
+        "parallel_minutes": 58,
+        "serial_minutes": 58,
+        "strategy": "budget-pruning-v0",
+        "utility": 1.665,
+        "warnings": [
+          "Dropped optional nodes to fit budget: secondary_sweep."
+        ]
+      }
+    ],
+    "constraints": {
+      "max_parallel_agents": 3,
+      "quality_target": 0.8,
+      "time_budget_minutes": 65,
+      "token_budget": 7000
+    },
+    "decisions": [
+      {
+        "choice": "task_graph",
+        "rationale": "Represent the task as nodes, dependencies, costs, value, risk, and uncertainty so strategy comparison is inspectable.",
+        "step": "model"
+      },
+      {
+        "choice": "critical-path-a-star-v0, budget-pruning-v0",
+        "rationale": "Compare a greedy baseline against a budget-aware pruning variant.",
+        "step": "generate_candidates"
+      },
+      {
+        "choice": "utility = value - token_cost - latency_cost - risk_cost - violation_penalty",
+        "rationale": "Budget fit matters, but dropped value and residual risk must remain visible.",
+        "step": "score_candidates"
+      },
+      {
+        "choice": "budget-pruning-v0",
+        "rationale": "budget-pruning-v0 fits hard budgets with value=3.2, risk=2.1, tokens=6400, parallel_minutes=58.",
+        "step": "select"
+      }
+    ],
+    "next_refinement": "Calibrate utility weights with observed task outcomes and add a quality penalty for missing optional evidence.",
+    "objective": "Select a scheduler for: Answer a research question under a tight budget",
+    "run_id": "tight-research-seed:budget-pruning-v0",
+    "selected_reason": "budget-pruning-v0 fits hard budgets with value=3.2, risk=2.1, tokens=6400, parallel_minutes=58.",
+    "selected_strategy": "budget-pruning-v0",
+    "selected_utility": 1.665
+  }
+]

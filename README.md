@@ -29,6 +29,7 @@ python -m reopt.journal --append docs/optimization-runs.md
 python -m reopt.export
 python -m reopt.snapshot benchmark-results/seed-current.json
 python -m reopt.diff previous.json current.json
+python -m reopt.regression
 python -m unittest discover -s tests
 ```
 
@@ -42,6 +43,7 @@ The current implementation is intentionally small:
 - `reopt.export` renders optimization runs as JSON for future evaluation
 - `reopt.snapshot` writes JSON exports to a file
 - `reopt.diff` compares two JSON exports
+- `reopt.regression` compares current seed output against the committed baseline
 - `reopt.benchmarks` contains seed tasks for early comparisons
 - `tests` checks that the seed plans are valid enough to iterate on
 
