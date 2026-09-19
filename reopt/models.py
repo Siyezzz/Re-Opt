@@ -26,6 +26,17 @@ class ConstraintSet:
 
 
 @dataclass(frozen=True)
+class UtilityWeights:
+    quality: float = 1.0
+    token: float = 0.0001
+    minute: float = 0.01
+    risk: float = 0.15
+    missed_optional: float = 0.25
+    token_overrun_multiplier: float = 4.0
+    minute_overrun: float = 0.08
+
+
+@dataclass(frozen=True)
 class TaskNode:
     node_id: str
     title: str
@@ -133,6 +144,7 @@ class OptimizationRun:
     run_id: str
     objective: str
     constraints: ConstraintSet
+    utility_weights: UtilityWeights
     candidate_scores: tuple[PlanScore, ...]
     selected_strategy: str
     selected_reason: str

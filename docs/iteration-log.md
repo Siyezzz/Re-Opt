@@ -337,3 +337,24 @@ utility now reflects that it dropped the optional secondary sweep.
 
 Learn the missed-optional penalty from observed task outcomes instead of using a
 fixed hand-tuned weight.
+
+## 2026-09-19 - Explicit Utility Weights
+
+### Objective
+
+Make optimizer scoring weights inspectable and eventually learnable.
+
+### Implementation
+
+Added `UtilityWeights` and stored it on every `OptimizationRun`. JSON exports now
+include the active weights that produced each selected utility.
+
+### Observed Result
+
+Strategy selection stays unchanged, but exported runs now preserve the scoring
+configuration needed for future comparison and calibration.
+
+### Next Refinement
+
+Add outcome records and a calibration routine that proposes utility-weight
+updates from observed quality, cost, and risk results.

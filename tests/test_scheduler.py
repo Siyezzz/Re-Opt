@@ -89,6 +89,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("missed_optional_value", data[0]["candidate_scores"][0])
         self.assertIn("selected_strategy", data[0])
         self.assertIn("selected_utility", data[0])
+        self.assertIn("utility_weights", data[0])
         self.assertEqual(data[2]["selected_strategy"], "budget-pruning-v0")
         self.assertGreater(data[2]["candidate_scores"][1]["missed_optional_value"], 0)
 

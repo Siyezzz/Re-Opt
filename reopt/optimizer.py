@@ -11,6 +11,7 @@ from .models import (
     OptimizationRun,
     PlanScore,
     TaskGraph,
+    UtilityWeights,
 )
 from .scheduler import BudgetPruningScheduler, HeuristicScheduler
 
@@ -18,13 +19,10 @@ from .scheduler import BudgetPruningScheduler, HeuristicScheduler
 def solve_optimization(
     graph: TaskGraph,
     constraints: ConstraintSet,
-    quality_weight: float = 1.0,
-    token_weight: float = 0.0001,
-    minute_weight: float = 0.01,
-    risk_weight: float = 0.15,
-    missed_optional_weight: float = 0.25,
+    utility_weights: UtilityWeights | None = None,
 ) -> OptimizationRun:
     """Compare known strategies and select one with an explicit utility score."""
+    weights = utility_weights or UtilityWeights()
     schedulers = [HeuristicScheduler(), BudgetPruningScheduler()]
     scores = tuple(
         score_plan(graph, scheduler.build_plan(graph, constraints))
@@ -35,11 +33,7 @@ def solve_optimization(
         key=lambda score: _utility(
             score,
             constraints,
-            quality_weight=quality_weight,
-            token_weight=token_weight,
-            minute_weight=minute_weight,
-            risk_weight=risk_weight,
-            missed_optional_weight=missed_optional_weight,
+            weights,
         ),
     )
     decisions = (
@@ -64,7 +58,7 @@ def solve_optimization(
             ),
             rationale=(
                 "Budget fit matters, but dropped value, residual risk, and missing "
-                "optional evidence must remain visible."
+                "optional evidence must remain visible through configured weights."
             ),
         ),
         OptimizationDecision(
@@ -77,6 +71,7 @@ def solve_optimization(
         run_id=f"{graph.graph_id}:{selected.strategy}",
         objective=f"Select a scheduler for: {graph.title}",
         constraints=constraints,
+        utility_weights=weights,
         candidate_scores=scores,
         selected_strategy=selected.strategy,
         selected_reason=_selection_reason(selected, constraints),
@@ -105,7 +100,7 @@ def format_optimization_run(run: OptimizationRun) -> str:
             f"serial={score.serial_minutes}, parallel={score.parallel_minutes}, "
             f"value={score.covered_value}, risk={score.covered_risk}, "
             f"coverage={score.value_coverage}, missed_optional={score.missed_optional_value}, "
-            f"utility={_utility(score, run.constraints):.3f}"
+            f"utility={_utility(score, run.constraints, run.utility_weights):.3f}"
         )
         for warning in score.warnings:
             lines.append(f"  warning: {warning}")
@@ -128,7 +123,7 @@ def optimization_run_to_dict(run: OptimizationRun) -> dict[str, object]:
     data["candidate_scores"] = [
         {
             **asdict(score),
-            "utility": round(score_utility(score, run.constraints), 3),
+            "utility": round(score_utility(score, run.constraints, run.utility_weights), 3),
         }
         for score in run.candidate_scores
     ]
@@ -137,33 +132,36 @@ def optimization_run_to_dict(run: OptimizationRun) -> dict[str, object]:
         for score in run.candidate_scores
         if score.strategy == run.selected_strategy
     )
-    data["selected_utility"] = round(score_utility(selected, run.constraints), 3)
+    data["selected_utility"] = round(
+        score_utility(selected, run.constraints, run.utility_weights), 3
+    )
     return data
 
 
-def score_utility(score: PlanScore, constraints: ConstraintSet) -> float:
-    return _utility(score, constraints)
+def score_utility(
+    score: PlanScore,
+    constraints: ConstraintSet,
+    utility_weights: UtilityWeights | None = None,
+) -> float:
+    return _utility(score, constraints, utility_weights or UtilityWeights())
 
 
 def _utility(
     score: PlanScore,
     constraints: ConstraintSet,
-    *,
-    quality_weight: float = 1.0,
-    token_weight: float = 0.0001,
-    minute_weight: float = 0.01,
-    risk_weight: float = 0.15,
-    missed_optional_weight: float = 0.25,
+    weights: UtilityWeights,
 ) -> float:
     token_overrun = max(0, score.estimated_tokens - constraints.token_budget)
     minute_overrun = max(0, score.parallel_minutes - constraints.time_budget_minutes)
-    violation_penalty = (token_overrun * token_weight * 4) + (minute_overrun * 0.08)
+    violation_penalty = (
+        token_overrun * weights.token * weights.token_overrun_multiplier
+    ) + (minute_overrun * weights.minute_overrun)
     return (
-        score.covered_value * quality_weight
-        - score.estimated_tokens * token_weight
-        - score.parallel_minutes * minute_weight
-        - score.covered_risk * risk_weight
-        - score.missed_optional_value * missed_optional_weight
+        score.covered_value * weights.quality
+        - score.estimated_tokens * weights.token
+        - score.parallel_minutes * weights.minute
+        - score.covered_risk * weights.risk
+        - score.missed_optional_value * weights.missed_optional
         - violation_penalty
     )
 

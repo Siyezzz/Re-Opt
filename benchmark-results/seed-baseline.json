@@ -49,7 +49,7 @@
       },
       {
         "choice": "utility = value - token_cost - latency_cost - risk_cost - missed_optional_cost - violation_penalty",
-        "rationale": "Budget fit matters, but dropped value, residual risk, and missing optional evidence must remain visible.",
+        "rationale": "Budget fit matters, but dropped value, residual risk, and missing optional evidence must remain visible through configured weights.",
         "step": "score_candidates"
       },
       {
@@ -63,7 +63,16 @@
     "run_id": "coding-debug-seed:critical-path-a-star-v0",
     "selected_reason": "critical-path-a-star-v0 fits hard budgets with value=4.2, coverage=1.0, missed_optional=0, risk=3.05, tokens=8800, parallel_minutes=90.",
     "selected_strategy": "critical-path-a-star-v0",
-    "selected_utility": 1.963
+    "selected_utility": 1.963,
+    "utility_weights": {
+      "minute": 0.01,
+      "minute_overrun": 0.08,
+      "missed_optional": 0.25,
+      "quality": 1.0,
+      "risk": 0.15,
+      "token": 0.0001,
+      "token_overrun_multiplier": 4.0
+    }
   },
   {
     "candidate_scores": [
@@ -115,7 +124,7 @@
       },
       {
         "choice": "utility = value - token_cost - latency_cost - risk_cost - missed_optional_cost - violation_penalty",
-        "rationale": "Budget fit matters, but dropped value, residual risk, and missing optional evidence must remain visible.",
+        "rationale": "Budget fit matters, but dropped value, residual risk, and missing optional evidence must remain visible through configured weights.",
         "step": "score_candidates"
       },
       {
@@ -129,7 +138,16 @@
     "run_id": "research-synthesis-seed:critical-path-a-star-v0",
     "selected_reason": "critical-path-a-star-v0 fits hard budgets with value=4.2, coverage=1.0, missed_optional=0, risk=2.75, tokens=10900, parallel_minutes=105.",
     "selected_strategy": "critical-path-a-star-v0",
-    "selected_utility": 1.648
+    "selected_utility": 1.648,
+    "utility_weights": {
+      "minute": 0.01,
+      "minute_overrun": 0.08,
+      "missed_optional": 0.25,
+      "quality": 1.0,
+      "risk": 0.15,
+      "token": 0.0001,
+      "token_overrun_multiplier": 4.0
+    }
   },
   {
     "candidate_scores": [
@@ -186,7 +204,7 @@
       },
       {
         "choice": "utility = value - token_cost - latency_cost - risk_cost - missed_optional_cost - violation_penalty",
-        "rationale": "Budget fit matters, but dropped value, residual risk, and missing optional evidence must remain visible.",
+        "rationale": "Budget fit matters, but dropped value, residual risk, and missing optional evidence must remain visible through configured weights.",
         "step": "score_candidates"
       },
       {
@@ -200,6 +218,15 @@
     "run_id": "tight-research-seed:budget-pruning-v0",
     "selected_reason": "budget-pruning-v0 fits hard budgets with value=3.2, coverage=0.877, missed_optional=0.45, risk=2.1, tokens=6400, parallel_minutes=58.",
     "selected_strategy": "budget-pruning-v0",
-    "selected_utility": 1.552
+    "selected_utility": 1.552,
+    "utility_weights": {
+      "minute": 0.01,
+      "minute_overrun": 0.08,
+      "missed_optional": 0.25,
+      "quality": 1.0,
+      "risk": 0.15,
+      "token": 0.0001,
+      "token_overrun_multiplier": 4.0
+    }
   }
 ]
