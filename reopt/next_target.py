@@ -18,6 +18,7 @@ class NextTarget:
 def suggest_next_target(
     iteration_log: Path = Path("docs/iteration-log.md"),
     adoption_index: Path = Path("docs/adoption-index.md"),
+    evidence_review: Path = Path("docs/outcome-evidence/simulated-next-outcome.md"),
 ) -> NextTarget:
     log_text = iteration_log.read_text(encoding="utf-8")
     index_text = adoption_index.read_text(encoding="utf-8")
@@ -25,6 +26,30 @@ def suggest_next_target(
     blocked_reports = _reports_by_status(index_text, "blocked")
     clean_reports = _reports_by_status(index_text, "clean")
     adopted_reports = _reports_by_status(index_text, "adopted")
+
+    if blocked_reports and adopted_reports and _synthetic_review_blocked(evidence_review):
+        adopted_report_paths = tuple(report for report, _weights in adopted_reports)
+        blocked_report_paths = tuple(report for report, _weights in blocked_reports)
+        return NextTarget(
+            title="Split remaining blocked weight increments",
+            rationale=(
+                "A validation-clean synthetic outcome still leaves the expanded "
+                "evidence proposal blocked. The next optimization should split or "
+                "cap the remaining token, minute, and missed-optional increments "
+                "before any adoption attempt."
+            ),
+            evidence=(
+                f"latest_next_refinement={latest_refinement}",
+                f"adopted_reports={', '.join(adopted_report_paths)}",
+                f"blocked_reports={', '.join(blocked_report_paths)}",
+                f"evidence_review={evidence_review.as_posix()}",
+            ),
+            suggested_commands=(
+                "python -m reopt.evidence_review --write-simulated --candidate outcomes/simulated-next-outcome.json --write-weights weights/proposed-expanded-evidence.json --write-report docs/outcome-evidence/simulated-next-outcome.md",
+                "python -m reopt.explain_adoption weights/proposed-expanded-evidence.json",
+                "python -m reopt.regression --check",
+            ),
+        )
 
     if blocked_reports and adopted_reports:
         adopted_report_paths = tuple(report for report, _weights in adopted_reports)
@@ -150,6 +175,13 @@ def _portable_path(path_text: str) -> str:
     return path_text.replace("\\", "/")
 
 
+def _synthetic_review_blocked(path: Path) -> bool:
+    if not path.exists():
+        return False
+    text = path.read_text(encoding="utf-8")
+    return "source: synthetic simulation" in text and "status: blocked" in text
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Suggest the next Re-Opt refinement target.")
     parser.add_argument(
@@ -164,9 +196,17 @@ def main() -> None:
         default=Path("docs/adoption-index.md"),
         help="Adoption index Markdown path.",
     )
+    parser.add_argument(
+        "--evidence-review",
+        type=Path,
+        default=Path("docs/outcome-evidence/simulated-next-outcome.md"),
+        help="Expanded evidence review Markdown path.",
+    )
     parser.add_argument("--write", type=Path, help="Write the suggestion to a Markdown file.")
     args = parser.parse_args()
-    rendered = render_next_target(suggest_next_target(args.iteration_log, args.adoption_index))
+    rendered = render_next_target(
+        suggest_next_target(args.iteration_log, args.adoption_index, args.evidence_review)
+    )
     if args.write:
         args.write.parent.mkdir(parents=True, exist_ok=True)
         args.write.write_text(rendered, encoding="utf-8")

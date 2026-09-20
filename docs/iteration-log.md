@@ -771,3 +771,38 @@ cover duplicate-record rejection and placeholder-value rejection.
 Collect or simulate a filled `outcomes/next-outcome.json` record, then compare
 whether the remaining blocked token, minute, and missed-optional increments are
 still negative under the expanded evidence set.
+
+## 2026-09-20 - Expanded Evidence Simulation
+
+### Objective
+
+Simulate a fresh outcome record and test whether the remaining blocked utility
+weight increments become adoptable under expanded evidence.
+
+### Implementation
+
+Added:
+
+```bash
+python -m reopt.evidence_review \
+  --write-simulated \
+  --candidate outcomes/simulated-next-outcome.json \
+  --write-weights weights/proposed-expanded-evidence.json \
+  --write-report docs/outcome-evidence/simulated-next-outcome.md
+```
+
+The command writes a synthetic coding-debug outcome, validates it against the
+intake gate, combines it with existing outcomes, proposes expanded-evidence
+weights, and renders an adoption checklist.
+
+### Observed Result
+
+The synthetic outcome is validation-clean, but the expanded-evidence proposal is
+still blocked: tight research drops by `-0.015`. The probe reduces the severity
+of the remaining block, but it does not justify adoption because the evidence is
+synthetic and the regression gate still fails.
+
+### Next Refinement
+
+Split or cap the remaining token, minute, and missed-optional increments before
+any adoption attempt.

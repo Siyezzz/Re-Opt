@@ -39,6 +39,11 @@ jobs:
           python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md
           git diff --exit-code docs/outcome-intake/next-outcome.md
 
+      - name: Check expanded evidence review freshness
+        run: |
+          python -m reopt.evidence_review --write-simulated --candidate outcomes/simulated-next-outcome.json --write-weights weights/proposed-expanded-evidence.json --write-report docs/outcome-evidence/simulated-next-outcome.md
+          git diff --exit-code outcomes/simulated-next-outcome.json weights/proposed-expanded-evidence.json docs/outcome-evidence/simulated-next-outcome.md
+
       - name: Check next target freshness
         run: |
           python -m reopt.next_target --write docs/next-target.md

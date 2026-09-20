@@ -1,18 +1,18 @@
 # Next Re-Opt Target
 
-title: Gather evidence for remaining blocked weight increments
+title: Split remaining blocked weight increments
 
-rationale: A smaller utility-weight experiment has been adopted, but the larger proposal still contains blocked increments. The next optimization should collect another outcome or split the remaining increments before changing more weights.
+rationale: A validation-clean synthetic outcome still leaves the expanded evidence proposal blocked. The next optimization should split or cap the remaining token, minute, and missed-optional increments before any adoption attempt.
 
 Evidence:
 
-- latest_next_refinement=Collect or simulate a filled `outcomes/next-outcome.json` record, then compare whether the remaining blocked token, minute, and missed-optional increments are still negative under the expanded evidence set.
+- latest_next_refinement=Split or cap the remaining token, minute, and missed-optional increments before any adoption attempt.
 - adopted_reports=adoption-reports/proposed-quality-seed.md
 - blocked_reports=adoption-reports/proposed-seed.md
+- evidence_review=docs/outcome-evidence/simulated-next-outcome.md
 
 Suggested commands:
 
-- `python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md`
-- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json`
-- `python -m reopt.explain_adoption weights/proposed-seed.json`
+- `python -m reopt.evidence_review --write-simulated --candidate outcomes/simulated-next-outcome.json --write-weights weights/proposed-expanded-evidence.json --write-report docs/outcome-evidence/simulated-next-outcome.md`
+- `python -m reopt.explain_adoption weights/proposed-expanded-evidence.json`
 - `python -m reopt.regression --check`

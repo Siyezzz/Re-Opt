@@ -33,6 +33,11 @@ from reopt.outcome_intake import (
     suggest_outcome_intake,
     validate_outcome_intake,
 )
+from reopt.evidence_review import (
+    review_expanded_evidence,
+    simulated_next_outcome,
+    write_simulated_outcome,
+)
 from reopt.outcomes import (
     OutcomeRecord,
     calibration_report,
@@ -357,6 +362,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             iteration_log = Path(tmp) / "iteration-log.md"
             adoption_index = Path(tmp) / "adoption-index.md"
+            evidence_review = Path(tmp) / "missing.md"
             iteration_log.write_text(
                 "\n".join(
                     [
@@ -383,7 +389,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            target = suggest_next_target(iteration_log, adoption_index)
+            target = suggest_next_target(iteration_log, adoption_index, evidence_review)
             rendered = render_next_target(target)
 
         self.assertIn("remaining blocked", target.title.lower())
@@ -391,6 +397,48 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("python -m reopt.outcome_intake", rendered)
         self.assertIn("--validate outcomes/next-outcome.json", rendered)
         self.assertIn("python -m reopt.explain_adoption", rendered)
+
+    def test_next_target_advances_after_synthetic_review_stays_blocked(self) -> None:
+        with TemporaryDirectory() as tmp:
+            iteration_log = Path(tmp) / "iteration-log.md"
+            adoption_index = Path(tmp) / "adoption-index.md"
+            evidence_review = Path(tmp) / "review.md"
+            iteration_log.write_text(
+                "\n".join(
+                    [
+                        "# Iteration Log",
+                        "",
+                        "### Next Refinement",
+                        "",
+                        "Compare expanded evidence.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            adoption_index.write_text(
+                "\n".join(
+                    [
+                        "# Adoption Report Index",
+                        "",
+                        "| Report | Status | Weights | Baseline |",
+                        "| --- | --- | --- | --- |",
+                        "| adoption-reports/proposed-quality.md | adopted | weights/quality.json | baseline.json |",
+                        "| adoption-reports/proposed.md | blocked | weights/proposed.json | baseline.json |",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            evidence_review.write_text(
+                "source: synthetic simulation\n\nstatus: blocked\n",
+                encoding="utf-8",
+            )
+
+            target = suggest_next_target(iteration_log, adoption_index, evidence_review)
+            rendered = render_next_target(target)
+
+        self.assertIn("split remaining", target.title.lower())
+        self.assertIn("evidence_review=", rendered)
+        self.assertIn("weights/proposed-expanded-evidence.json", rendered)
 
     def test_outcome_intake_requests_fresh_evidence(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -466,6 +514,45 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("duplicates an existing outcome record", report)
         self.assertIn("actual_tokens must be observed", report)
         self.assertIn("observed_quality must be observed", report)
+
+    def test_evidence_review_keeps_synthetic_probe_separate(self) -> None:
+        with TemporaryDirectory() as tmp:
+            existing_path = Path(tmp) / "existing.json"
+            candidate_path = Path(tmp) / "candidate.json"
+            weights_path = Path(tmp) / "proposed.json"
+            baseline_path = Path(tmp) / "baseline.json"
+            dump_outcomes(
+                existing_path,
+                (
+                    OutcomeRecord(
+                        graph_id="tight-research-seed",
+                        strategy="budget-pruning-v0",
+                        observed_quality=0.7,
+                        target_quality=0.8,
+                        actual_tokens=7600,
+                        token_budget=7000,
+                        actual_minutes=70,
+                        time_budget_minutes=65,
+                        missed_optional_harm=0.4,
+                    ),
+                ),
+            )
+            write_simulated_outcome(candidate_path)
+            write_seed_snapshot(baseline_path)
+
+            report = review_expanded_evidence(
+                candidate_path,
+                weights_path,
+                existing_path,
+                baseline_path,
+            )
+            proposed = load_utility_weights(weights_path)
+
+        self.assertIn("source: synthetic simulation", report)
+        self.assertIn("status: clean", report)
+        self.assertIn("do not adopt weights from synthetic evidence alone", report)
+        self.assertEqual(proposed.quality, 1.075)
+        self.assertEqual(proposed.missed_optional, 0.35)
 
     def test_calibration_preview_reports_regression_diff(self) -> None:
         outcome = OutcomeRecord(
