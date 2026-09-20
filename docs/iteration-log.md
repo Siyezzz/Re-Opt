@@ -806,3 +806,36 @@ synthetic and the regression gate still fails.
 
 Split or cap the remaining token, minute, and missed-optional increments before
 any adoption attempt.
+
+## 2026-09-20 - Increment Cap Search
+
+### Objective
+
+Find the largest reversible cap on the expanded-evidence utility-weight
+increments that does not trigger the regression gate.
+
+### Implementation
+
+Added:
+
+```bash
+python -m reopt.increment_cap weights/proposed-expanded-evidence.json \
+  --write-weights weights/proposed-capped-expanded-evidence.json \
+  --write-report docs/weight-caps/expanded-evidence.md
+```
+
+The command interpolates from baseline weights to the expanded-evidence proposal
+and searches for the largest clean uniform ratio.
+
+### Observed Result
+
+The largest clean cap is only `0.011`, producing a tiny reversible proposal:
+`quality=1.050275`, `minute=0.0100042`, `missed_optional=0.2511`, and unchanged
+token cost after rounding. The adoption checklist for this capped proposal is
+clean, but all selected utility deltas round to `+0.000`.
+
+### Next Refinement
+
+Review whether the capped expanded-evidence proposal is meaningful enough to
+adopt, or whether it should wait for observed evidence instead of synthetic
+planning probes.

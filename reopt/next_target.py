@@ -19,6 +19,7 @@ def suggest_next_target(
     iteration_log: Path = Path("docs/iteration-log.md"),
     adoption_index: Path = Path("docs/adoption-index.md"),
     evidence_review: Path = Path("docs/outcome-evidence/simulated-next-outcome.md"),
+    cap_review: Path = Path("docs/weight-caps/expanded-evidence.md"),
 ) -> NextTarget:
     log_text = iteration_log.read_text(encoding="utf-8")
     index_text = adoption_index.read_text(encoding="utf-8")
@@ -26,6 +27,28 @@ def suggest_next_target(
     blocked_reports = _reports_by_status(index_text, "blocked")
     clean_reports = _reports_by_status(index_text, "clean")
     adopted_reports = _reports_by_status(index_text, "adopted")
+
+    if blocked_reports and adopted_reports and _cap_review_clean(cap_review):
+        adopted_report_paths = tuple(report for report, _weights in adopted_reports)
+        blocked_report_paths = tuple(report for report, _weights in blocked_reports)
+        return NextTarget(
+            title="Review the capped expanded-evidence proposal",
+            rationale=(
+                "The remaining blocked increments now have a capped clean proposal. "
+                "The next optimization should decide whether this tiny reversible "
+                "step is meaningful enough to adopt or should wait for observed evidence."
+            ),
+            evidence=(
+                f"latest_next_refinement={latest_refinement}",
+                f"adopted_reports={', '.join(adopted_report_paths)}",
+                f"blocked_reports={', '.join(blocked_report_paths)}",
+                f"cap_review={cap_review.as_posix()}",
+            ),
+            suggested_commands=(
+                "python -m reopt.adopt weights/proposed-capped-expanded-evidence.json",
+                "python -m reopt.regression --check",
+            ),
+        )
 
     if blocked_reports and adopted_reports and _synthetic_review_blocked(evidence_review):
         adopted_report_paths = tuple(report for report, _weights in adopted_reports)
@@ -182,6 +205,13 @@ def _synthetic_review_blocked(path: Path) -> bool:
     return "source: synthetic simulation" in text and "status: blocked" in text
 
 
+def _cap_review_clean(path: Path) -> bool:
+    if not path.exists():
+        return False
+    text = path.read_text(encoding="utf-8")
+    return "largest_clean_ratio:" in text and "status: clean" in text
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Suggest the next Re-Opt refinement target.")
     parser.add_argument(
@@ -202,10 +232,21 @@ def main() -> None:
         default=Path("docs/outcome-evidence/simulated-next-outcome.md"),
         help="Expanded evidence review Markdown path.",
     )
+    parser.add_argument(
+        "--cap-review",
+        type=Path,
+        default=Path("docs/weight-caps/expanded-evidence.md"),
+        help="Increment cap review Markdown path.",
+    )
     parser.add_argument("--write", type=Path, help="Write the suggestion to a Markdown file.")
     args = parser.parse_args()
     rendered = render_next_target(
-        suggest_next_target(args.iteration_log, args.adoption_index, args.evidence_review)
+        suggest_next_target(
+            args.iteration_log,
+            args.adoption_index,
+            args.evidence_review,
+            args.cap_review,
+        )
     )
     if args.write:
         args.write.parent.mkdir(parents=True, exist_ok=True)

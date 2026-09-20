@@ -38,6 +38,7 @@ from reopt.evidence_review import (
     simulated_next_outcome,
     write_simulated_outcome,
 )
+from reopt.increment_cap import find_largest_clean_cap, render_cap_report
 from reopt.outcomes import (
     OutcomeRecord,
     calibration_report,
@@ -363,6 +364,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
             iteration_log = Path(tmp) / "iteration-log.md"
             adoption_index = Path(tmp) / "adoption-index.md"
             evidence_review = Path(tmp) / "missing.md"
+            cap_review = Path(tmp) / "missing-cap.md"
             iteration_log.write_text(
                 "\n".join(
                     [
@@ -389,7 +391,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            target = suggest_next_target(iteration_log, adoption_index, evidence_review)
+            target = suggest_next_target(iteration_log, adoption_index, evidence_review, cap_review)
             rendered = render_next_target(target)
 
         self.assertIn("remaining blocked", target.title.lower())
@@ -403,6 +405,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
             iteration_log = Path(tmp) / "iteration-log.md"
             adoption_index = Path(tmp) / "adoption-index.md"
             evidence_review = Path(tmp) / "review.md"
+            cap_review = Path(tmp) / "missing-cap.md"
             iteration_log.write_text(
                 "\n".join(
                     [
@@ -433,12 +436,64 @@ class HeuristicSchedulerTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            target = suggest_next_target(iteration_log, adoption_index, evidence_review)
+            target = suggest_next_target(iteration_log, adoption_index, evidence_review, cap_review)
             rendered = render_next_target(target)
 
         self.assertIn("split remaining", target.title.lower())
         self.assertIn("evidence_review=", rendered)
         self.assertIn("weights/proposed-expanded-evidence.json", rendered)
+
+    def test_next_target_advances_after_cap_review_is_clean(self) -> None:
+        with TemporaryDirectory() as tmp:
+            iteration_log = Path(tmp) / "iteration-log.md"
+            adoption_index = Path(tmp) / "adoption-index.md"
+            evidence_review = Path(tmp) / "review.md"
+            cap_review = Path(tmp) / "cap.md"
+            iteration_log.write_text(
+                "\n".join(
+                    [
+                        "# Iteration Log",
+                        "",
+                        "### Next Refinement",
+                        "",
+                        "Split remaining increments.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            adoption_index.write_text(
+                "\n".join(
+                    [
+                        "# Adoption Report Index",
+                        "",
+                        "| Report | Status | Weights | Baseline |",
+                        "| --- | --- | --- | --- |",
+                        "| adoption-reports/proposed-quality.md | adopted | weights/quality.json | baseline.json |",
+                        "| adoption-reports/proposed.md | blocked | weights/proposed.json | baseline.json |",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            evidence_review.write_text(
+                "source: synthetic simulation\n\nstatus: blocked\n",
+                encoding="utf-8",
+            )
+            cap_review.write_text(
+                "largest_clean_ratio: 0.011\n\nstatus: clean\n",
+                encoding="utf-8",
+            )
+
+            target = suggest_next_target(
+                iteration_log,
+                adoption_index,
+                evidence_review,
+                cap_review,
+            )
+            rendered = render_next_target(target)
+
+        self.assertIn("capped expanded-evidence", target.title.lower())
+        self.assertIn("cap_review=", rendered)
+        self.assertIn("weights/proposed-capped-expanded-evidence.json", rendered)
 
     def test_outcome_intake_requests_fresh_evidence(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -553,6 +608,41 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("do not adopt weights from synthetic evidence alone", report)
         self.assertEqual(proposed.quality, 1.075)
         self.assertEqual(proposed.missed_optional, 0.35)
+
+    def test_increment_cap_finds_largest_clean_ratio(self) -> None:
+        with TemporaryDirectory() as tmp:
+            proposed_path = Path(tmp) / "proposed.json"
+            capped_path = Path(tmp) / "capped.json"
+            baseline_path = Path(tmp) / "baseline.json"
+            write_seed_snapshot(baseline_path)
+            dump_utility_weights(
+                proposed_path,
+                UtilityWeights(
+                    quality=1.075,
+                    token=0.0001043,
+                    minute=0.01038,
+                    missed_optional=0.35,
+                ),
+            )
+
+            ratio, capped = find_largest_clean_cap(
+                load_utility_weights(proposed_path),
+                baseline_path,
+                step=0.01,
+            )
+            report = render_cap_report(
+                proposed_path,
+                capped_path,
+                baseline_path,
+                step=0.01,
+            )
+            checklist = adoption_checklist(capped_path, baseline_path)
+
+        self.assertGreater(ratio, 0)
+        self.assertLess(ratio, 1)
+        self.assertLess(capped.missed_optional, 0.35)
+        self.assertIn("largest_clean_ratio:", report)
+        self.assertIn("status: clean", checklist)
 
     def test_calibration_preview_reports_regression_diff(self) -> None:
         outcome = OutcomeRecord(

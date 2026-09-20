@@ -1,18 +1,17 @@
 # Next Re-Opt Target
 
-title: Split remaining blocked weight increments
+title: Review the capped expanded-evidence proposal
 
-rationale: A validation-clean synthetic outcome still leaves the expanded evidence proposal blocked. The next optimization should split or cap the remaining token, minute, and missed-optional increments before any adoption attempt.
+rationale: The remaining blocked increments now have a capped clean proposal. The next optimization should decide whether this tiny reversible step is meaningful enough to adopt or should wait for observed evidence.
 
 Evidence:
 
-- latest_next_refinement=Split or cap the remaining token, minute, and missed-optional increments before any adoption attempt.
+- latest_next_refinement=Review whether the capped expanded-evidence proposal is meaningful enough to adopt, or whether it should wait for observed evidence instead of synthetic planning probes.
 - adopted_reports=adoption-reports/proposed-quality-seed.md
 - blocked_reports=adoption-reports/proposed-seed.md
-- evidence_review=docs/outcome-evidence/simulated-next-outcome.md
+- cap_review=docs/weight-caps/expanded-evidence.md
 
 Suggested commands:
 
-- `python -m reopt.evidence_review --write-simulated --candidate outcomes/simulated-next-outcome.json --write-weights weights/proposed-expanded-evidence.json --write-report docs/outcome-evidence/simulated-next-outcome.md`
-- `python -m reopt.explain_adoption weights/proposed-expanded-evidence.json`
+- `python -m reopt.adopt weights/proposed-capped-expanded-evidence.json`
 - `python -m reopt.regression --check`
