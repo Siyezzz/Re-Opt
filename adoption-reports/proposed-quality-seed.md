@@ -1,12 +1,8 @@
 # Utility Weight Adoption Checklist
 
-weights: weights/proposed-seed.json
+weights: weights/proposed-quality-seed.json
 baseline: benchmark-results/seed-baseline.json
-status: blocked
-
-Blocking regression signals:
-
-- Select a scheduler for: Answer a research question under a tight budget: utility dropped by -0.029
+status: clean
 
 Required adoption steps:
 
@@ -20,17 +16,17 @@ Required adoption steps:
 ## Select a scheduler for: Answer a research question under a tight budget
 
 - strategy: unchanged
-- utility_delta: -0.029
+- utility_delta: +0.161
 - warning_delta: +0
 
 ## Select a scheduler for: Debug a failing feature and verify the fix
 
 - strategy: unchanged
-- utility_delta: +0.065
+- utility_delta: +0.210
 - warning_delta: +0
 
 ## Select a scheduler for: Research a broad question and synthesize a position
 
 - strategy: unchanged
-- utility_delta: +0.035
+- utility_delta: +0.210
 - warning_delta: +0

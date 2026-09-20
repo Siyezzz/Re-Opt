@@ -32,8 +32,8 @@ def adoption_checklist(
     lines = [
         "# Utility Weight Adoption Checklist",
         "",
-        f"weights: {weights_path}",
-        f"baseline: {baseline_path}",
+        f"weights: {weights_path.as_posix()}",
+        f"baseline: {baseline_path.as_posix()}",
         f"status: {status}",
         "",
     ]

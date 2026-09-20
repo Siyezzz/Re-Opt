@@ -639,3 +639,40 @@ checked in CI alongside the adoption index.
 
 Implement the suggested target: explain why the blocked proposal fails and
 derive a smaller reversible experiment that may reduce the blocked utility drop.
+
+## 2026-09-20 - Blocked Adoption Explanation
+
+### Objective
+
+Explain why `weights/proposed-seed.json` is blocked and derive a smaller,
+reversible experiment.
+
+### Implementation
+
+Added:
+
+```bash
+python -m reopt.explain_adoption weights/proposed-seed.json \
+  --write-report docs/adoption-analysis/proposed-seed.md \
+  --write-smaller-weights weights/proposed-quality-seed.json
+```
+
+The command attributes utility deltas to each changed weight and selects a
+single-weight experiment only when every seed objective stays non-negative.
+
+### Observed Result
+
+The original proposal improves two seed objectives but drops the tight research
+objective by `-0.029`. Weight-level attribution shows `quality` alone improves
+all seed objectives, while `token`, `minute`, and `missed_optional` each create
+negative isolated deltas. The smaller `quality=1.05` experiment is clean:
+
+```bash
+python -m reopt.adopt weights/proposed-quality-seed.json \
+  --write-report adoption-reports/proposed-quality-seed.md
+```
+
+### Next Refinement
+
+Decide whether to adopt the clean smaller experiment into the baseline or gather
+another outcome record before changing committed utility weights.

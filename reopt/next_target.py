@@ -22,7 +22,30 @@ def suggest_next_target(
     log_text = iteration_log.read_text(encoding="utf-8")
     index_text = adoption_index.read_text(encoding="utf-8")
     latest_refinement = _last_next_refinement(log_text)
-    blocked_reports = _blocked_reports(index_text)
+    blocked_reports = _reports_by_status(index_text, "blocked")
+    clean_reports = _reports_by_status(index_text, "clean")
+
+    if blocked_reports and clean_reports:
+        clean_report_paths = tuple(report for report, _weights in clean_reports)
+        first_clean_weights = _portable_path(clean_reports[0][1])
+        blocked_report_paths = tuple(report for report, _weights in blocked_reports)
+        return NextTarget(
+            title="Review the clean smaller adoption experiment",
+            rationale=(
+                "A blocked proposal now has at least one clean smaller experiment. "
+                "The next optimization should decide whether to adopt that reversible "
+                "step or gather more outcome evidence before changing the baseline."
+            ),
+            evidence=(
+                f"latest_next_refinement={latest_refinement}",
+                f"blocked_reports={', '.join(blocked_report_paths)}",
+                f"clean_reports={', '.join(clean_report_paths)}",
+            ),
+            suggested_commands=(
+                f"python -m reopt.adopt {first_clean_weights}",
+                "python -m reopt.regression --check",
+            ),
+        )
 
     if blocked_reports:
         blocked_report_paths = tuple(report for report, _weights in blocked_reports)
@@ -87,10 +110,11 @@ def _last_next_refinement(log_text: str) -> str:
     return " ".join(line.strip() for line in tail.splitlines() if line.strip())
 
 
-def _blocked_reports(index_text: str) -> tuple[tuple[str, str], ...]:
+def _reports_by_status(index_text: str, status: str) -> tuple[tuple[str, str], ...]:
     reports: list[tuple[str, str]] = []
+    status_cell = f" | {status} | "
     for line in index_text.splitlines():
-        if line.startswith("| ") and " | blocked | " in line:
+        if line.startswith("| ") and status_cell in line:
             cells = [cell.strip() for cell in line.strip("|").split("|")]
             if len(cells) >= 3:
                 reports.append((cells[0], cells[2]))

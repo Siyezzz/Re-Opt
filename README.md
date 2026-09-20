@@ -37,6 +37,7 @@ python -m reopt.calibrate outcomes/seed-outcomes.json
 python -m reopt.export --weights weights/proposed-seed.json
 python -m reopt.adopt weights/proposed-seed.json
 python -m reopt.adopt weights/proposed-seed.json --write-report adoption-reports/proposed-seed.md
+python -m reopt.explain_adoption weights/proposed-seed.json --write-report docs/adoption-analysis/proposed-seed.md --write-smaller-weights weights/proposed-quality-seed.json
 python -m reopt.report_index --write docs/adoption-index.md
 python -m reopt.next_target --write docs/next-target.md
 python -m unittest discover -s tests
@@ -56,6 +57,7 @@ The current implementation is intentionally small:
 - `reopt.outcomes` proposes utility-weight updates from observed outcomes
 - `reopt.calibrate` previews proposed weights against the regression baseline
 - `reopt.adopt` produces a review checklist for proposed utility weights
+- `reopt.explain_adoption` explains blocked weight adoption and proposes smaller experiments
 - `reopt.report_index` summarizes adoption review artifacts
 - `reopt.next_target` suggests the next refinement from current artifacts
 - `reopt.benchmarks` contains seed tasks for early comparisons
