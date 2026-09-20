@@ -587,3 +587,55 @@ requests that edit adoption reports without updating the index should fail CI.
 
 After quota resets, add a lightweight command that explains the next best
 refinement target from the iteration log and current blocked artifacts.
+
+## 2026-09-20 - Next Target Suggestion
+
+### Objective
+
+Make Re-Opt resumable after a pause or quota stop.
+
+### Implementation
+
+Added:
+
+```bash
+python -m reopt.next_target --write docs/next-target.md
+```
+
+The command reads the iteration log and adoption index, then suggests the next
+refinement target with evidence and commands.
+
+### Observed Result
+
+Because the current adoption index contains a blocked proposed-weight report,
+the next target points at explaining and reducing blocked adoption proposals.
+
+### Next Refinement
+
+Generate and commit the current `docs/next-target.md`, then add a CI freshness
+check so the suggestion cannot drift from current artifacts.
+
+## 2026-09-20 - Next Target CI Check
+
+### Objective
+
+Keep the resume target synchronized with current artifacts.
+
+### Implementation
+
+Updated GitHub Actions to run:
+
+```bash
+python -m reopt.next_target --write docs/next-target.md
+git diff --exit-code docs/next-target.md
+```
+
+### Observed Result
+
+The next target points to the current blocked adoption proposal and is now
+checked in CI alongside the adoption index.
+
+### Next Refinement
+
+Implement the suggested target: explain why the blocked proposal fails and
+derive a smaller reversible experiment that may reduce the blocked utility drop.

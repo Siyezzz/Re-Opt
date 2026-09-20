@@ -22,6 +22,7 @@ from reopt.regression import check_seed_baseline, compare_seed_baseline
 from reopt.adopt import adoption_checklist
 from reopt.calibrate import preview_calibration
 from reopt.report_index import render_adoption_index
+from reopt.next_target import render_next_target, suggest_next_target
 from reopt.outcomes import (
     OutcomeRecord,
     calibration_report,
@@ -268,6 +269,42 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("# Adoption Report Index", index)
         self.assertIn("blocked", index)
         self.assertIn("weights/proposed.json", index)
+
+    def test_next_target_prefers_blocked_adoption_reports(self) -> None:
+        with TemporaryDirectory() as tmp:
+            iteration_log = Path(tmp) / "iteration-log.md"
+            adoption_index = Path(tmp) / "adoption-index.md"
+            iteration_log.write_text(
+                "\n".join(
+                    [
+                        "# Iteration Log",
+                        "",
+                        "### Next Refinement",
+                        "",
+                        "Add an adoption checklist.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            adoption_index.write_text(
+                "\n".join(
+                    [
+                        "# Adoption Report Index",
+                        "",
+                        "| Report | Status | Weights | Baseline |",
+                        "| --- | --- | --- | --- |",
+                        "| adoption-reports/proposed.md | blocked | weights/proposed.json | baseline.json |",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            target = suggest_next_target(iteration_log, adoption_index)
+            rendered = render_next_target(target)
+
+        self.assertIn("blocked adoption", target.title.lower())
+        self.assertIn("adoption-reports/proposed.md", rendered)
+        self.assertIn("python -m reopt.adopt weights/proposed.json", rendered)
 
     def test_calibration_preview_reports_regression_diff(self) -> None:
         outcome = OutcomeRecord(
