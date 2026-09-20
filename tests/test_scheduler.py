@@ -27,6 +27,12 @@ from reopt.explain_adoption import (
     explain_blocked_adoption,
     write_smaller_experiment,
 )
+from reopt.outcome_intake import (
+    render_outcome_intake,
+    render_validation_report,
+    suggest_outcome_intake,
+    validate_outcome_intake,
+)
 from reopt.outcomes import (
     OutcomeRecord,
     calibration_report,
@@ -382,7 +388,84 @@ class HeuristicSchedulerTest(unittest.TestCase):
 
         self.assertIn("remaining blocked", target.title.lower())
         self.assertIn("adopted_reports=adoption-reports/proposed-quality.md", rendered)
+        self.assertIn("python -m reopt.outcome_intake", rendered)
+        self.assertIn("--validate outcomes/next-outcome.json", rendered)
         self.assertIn("python -m reopt.explain_adoption", rendered)
+
+    def test_outcome_intake_requests_fresh_evidence(self) -> None:
+        with TemporaryDirectory() as tmp:
+            outcomes_path = Path(tmp) / "outcomes.json"
+            next_target_path = Path(tmp) / "next-target.md"
+            dump_outcomes(
+                outcomes_path,
+                (
+                    OutcomeRecord(
+                        graph_id="tight-research-seed",
+                        strategy="budget-pruning-v0",
+                        observed_quality=0.7,
+                        target_quality=0.8,
+                        actual_tokens=7600,
+                        token_budget=7000,
+                        actual_minutes=70,
+                        time_budget_minutes=65,
+                        missed_optional_harm=0.4,
+                    ),
+                ),
+            )
+            next_target_path.write_text(
+                "# Next Re-Opt Target\n\ntitle: Gather evidence\n",
+                encoding="utf-8",
+            )
+
+            request = suggest_outcome_intake(outcomes_path, next_target_path)
+            rendered = render_outcome_intake(request)
+
+        self.assertIn("Collect a new outcome", request.title)
+        self.assertIn("tight-research-seed/budget-pruning-v0", rendered)
+        self.assertIn('"graph_id": "coding-debug-seed"', rendered)
+        self.assertIn("python -m reopt.outcome_intake --validate", rendered)
+        self.assertIn("python -m reopt.calibrate outcomes/next-outcome.json", rendered)
+
+    def test_outcome_intake_validation_blocks_placeholders_and_reuse(self) -> None:
+        with TemporaryDirectory() as tmp:
+            existing_path = Path(tmp) / "existing.json"
+            candidate_path = Path(tmp) / "candidate.json"
+            existing = OutcomeRecord(
+                graph_id="tight-research-seed",
+                strategy="budget-pruning-v0",
+                observed_quality=0.7,
+                target_quality=0.8,
+                actual_tokens=7600,
+                token_budget=7000,
+                actual_minutes=70,
+                time_budget_minutes=65,
+                missed_optional_harm=0.4,
+            )
+            dump_outcomes(existing_path, (existing,))
+            dump_outcomes(
+                candidate_path,
+                (
+                    existing,
+                    OutcomeRecord(
+                        graph_id="coding-debug-seed",
+                        strategy="critical-path-a-star-v0",
+                        observed_quality=0.0,
+                        target_quality=0.8,
+                        actual_tokens=0,
+                        token_budget=12000,
+                        actual_minutes=0,
+                        time_budget_minutes=90,
+                    ),
+                ),
+            )
+
+            ok, failures = validate_outcome_intake(candidate_path, existing_path)
+            report = render_validation_report(ok, failures)
+
+        self.assertFalse(ok)
+        self.assertIn("duplicates an existing outcome record", report)
+        self.assertIn("actual_tokens must be observed", report)
+        self.assertIn("observed_quality must be observed", report)
 
     def test_calibration_preview_reports_regression_diff(self) -> None:
         outcome = OutcomeRecord(

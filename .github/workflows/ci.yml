@@ -34,6 +34,11 @@ jobs:
           python -m reopt.report_index --write docs/adoption-index.md
           git diff --exit-code docs/adoption-index.md
 
+      - name: Check outcome intake freshness
+        run: |
+          python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md
+          git diff --exit-code docs/outcome-intake/next-outcome.md
+
       - name: Check next target freshness
         run: |
           python -m reopt.next_target --write docs/next-target.md

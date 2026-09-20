@@ -711,3 +711,63 @@ a clean single-weight adoption step.
 
 Gather another outcome record before proposing more utility-weight changes, so
 the same tight-research outcome is not repeatedly reused to push quality upward.
+
+## 2026-09-20 - Outcome Evidence Intake
+
+### Objective
+
+Turn "gather another outcome" into a concrete, reviewable artifact.
+
+### Implementation
+
+Added:
+
+```bash
+python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md
+```
+
+The command reads existing outcome records and the current next target, then
+generates a fresh evidence request with required fields, a suggested JSON
+record, commands, and an explicit "do not reuse" list.
+
+### Observed Result
+
+The generated intake blocks accidental reuse of the existing
+`tight-research-seed/budget-pruning-v0` outcome and suggests collecting a
+fresh `coding-debug-seed/critical-path-a-star-v0` observation before proposing
+more utility-weight changes.
+
+### Next Refinement
+
+Add validation for filled outcome-intake records so placeholder values cannot be
+mistaken for observed evidence.
+
+## 2026-09-20 - Outcome Intake Validation
+
+### Objective
+
+Prevent placeholder or duplicated outcome records from entering calibration as
+fresh evidence.
+
+### Implementation
+
+Extended `reopt.outcome_intake` with:
+
+```bash
+python -m reopt.outcome_intake --validate outcomes/next-outcome.json
+```
+
+Validation rejects exact reuse of existing outcome records and blocks placeholder
+values such as zero observed quality, zero actual tokens, and zero actual
+minutes.
+
+### Observed Result
+
+The generated outcome intake now includes validation before calibration. Tests
+cover duplicate-record rejection and placeholder-value rejection.
+
+### Next Refinement
+
+Collect or simulate a filled `outcomes/next-outcome.json` record, then compare
+whether the remaining blocked token, minute, and missed-optional increments are
+still negative under the expanded evidence set.

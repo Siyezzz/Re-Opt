@@ -43,6 +43,8 @@ def suggest_next_target(
                 f"blocked_reports={', '.join(blocked_report_paths)}",
             ),
             suggested_commands=(
+                "python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md",
+                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json",
                 "python -m reopt.explain_adoption weights/proposed-seed.json",
                 "python -m reopt.regression --check",
             ),
