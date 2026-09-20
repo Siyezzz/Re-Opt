@@ -676,3 +676,38 @@ python -m reopt.adopt weights/proposed-quality-seed.json \
 
 Decide whether to adopt the clean smaller experiment into the baseline or gather
 another outcome record before changing committed utility weights.
+
+## 2026-09-20 - Adopt Quality Weight Increment
+
+### Objective
+
+Review the clean smaller adoption experiment and decide whether it should become
+the committed baseline.
+
+### Implementation
+
+Adopted the smaller experiment by setting the default utility `quality` weight
+to `1.05` and regenerating:
+
+```bash
+python -m reopt.snapshot benchmark-results/seed-baseline.json
+python -m reopt.adopt weights/proposed-quality-seed.json \
+  --write-report adoption-reports/proposed-quality-seed.md
+python -m reopt.explain_adoption weights/proposed-seed.json \
+  --write-report docs/adoption-analysis/proposed-seed.md
+```
+
+`reopt.adopt` now reports `status: adopted` when proposed weights match the
+baseline utility weights.
+
+### Observed Result
+
+The quality-only experiment is now adopted with zero baseline deltas. The
+remaining increments in `weights/proposed-seed.json` are all negative against
+the new baseline: token, minute, and missed optional penalties no longer contain
+a clean single-weight adoption step.
+
+### Next Refinement
+
+Gather another outcome record before proposing more utility-weight changes, so
+the same tight-research outcome is not repeatedly reused to push quality upward.

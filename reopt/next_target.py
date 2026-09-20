@@ -24,6 +24,29 @@ def suggest_next_target(
     latest_refinement = _last_next_refinement(log_text)
     blocked_reports = _reports_by_status(index_text, "blocked")
     clean_reports = _reports_by_status(index_text, "clean")
+    adopted_reports = _reports_by_status(index_text, "adopted")
+
+    if blocked_reports and adopted_reports:
+        adopted_report_paths = tuple(report for report, _weights in adopted_reports)
+        blocked_report_paths = tuple(report for report, _weights in blocked_reports)
+        return NextTarget(
+            title="Gather evidence for remaining blocked weight increments",
+            rationale=(
+                "A smaller utility-weight experiment has been adopted, but the "
+                "larger proposal still contains blocked increments. The next "
+                "optimization should collect another outcome or split the remaining "
+                "increments before changing more weights."
+            ),
+            evidence=(
+                f"latest_next_refinement={latest_refinement}",
+                f"adopted_reports={', '.join(adopted_report_paths)}",
+                f"blocked_reports={', '.join(blocked_report_paths)}",
+            ),
+            suggested_commands=(
+                "python -m reopt.explain_adoption weights/proposed-seed.json",
+                "python -m reopt.regression --check",
+            ),
+        )
 
     if blocked_reports and clean_reports:
         clean_report_paths = tuple(report for report, _weights in clean_reports)

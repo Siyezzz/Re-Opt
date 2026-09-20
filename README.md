@@ -37,7 +37,7 @@ python -m reopt.calibrate outcomes/seed-outcomes.json
 python -m reopt.export --weights weights/proposed-seed.json
 python -m reopt.adopt weights/proposed-seed.json
 python -m reopt.adopt weights/proposed-seed.json --write-report adoption-reports/proposed-seed.md
-python -m reopt.explain_adoption weights/proposed-seed.json --write-report docs/adoption-analysis/proposed-seed.md --write-smaller-weights weights/proposed-quality-seed.json
+python -m reopt.explain_adoption weights/proposed-seed.json --write-report docs/adoption-analysis/proposed-seed.md
 python -m reopt.report_index --write docs/adoption-index.md
 python -m reopt.next_target --write docs/next-target.md
 python -m unittest discover -s tests

@@ -226,7 +226,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             weights_path = Path(tmp) / "weights.json"
             baseline_path = Path(tmp) / "baseline.json"
-            dump_utility_weights(weights_path, UtilityWeights())
+            dump_utility_weights(weights_path, UtilityWeights(quality=1.1))
             write_seed_snapshot(baseline_path)
 
             checklist = adoption_checklist(weights_path, baseline_path)
@@ -235,7 +235,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("status: clean", checklist)
         self.assertIn("Required adoption steps:", checklist)
 
-    def test_adoption_checklist_can_be_persisted(self) -> None:
+    def test_adoption_checklist_reports_adopted_status(self) -> None:
         with TemporaryDirectory() as tmp:
             weights_path = Path(tmp) / "weights.json"
             baseline_path = Path(tmp) / "baseline.json"
@@ -247,7 +247,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
             report_path.write_text(report, encoding="utf-8")
             content = report_path.read_text(encoding="utf-8")
 
-        self.assertIn("status: clean", content)
+        self.assertIn("status: adopted", content)
         self.assertIn("# Optimization Export Diff", content)
 
     def test_adoption_report_index_summarizes_reports(self) -> None:
@@ -347,6 +347,43 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("adoption-reports/proposed-quality.md", rendered)
         self.assertIn("python -m reopt.adopt weights/quality.json", rendered)
 
+    def test_next_target_advances_after_smaller_experiment_is_adopted(self) -> None:
+        with TemporaryDirectory() as tmp:
+            iteration_log = Path(tmp) / "iteration-log.md"
+            adoption_index = Path(tmp) / "adoption-index.md"
+            iteration_log.write_text(
+                "\n".join(
+                    [
+                        "# Iteration Log",
+                        "",
+                        "### Next Refinement",
+                        "",
+                        "Review a clean smaller proposal.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            adoption_index.write_text(
+                "\n".join(
+                    [
+                        "# Adoption Report Index",
+                        "",
+                        "| Report | Status | Weights | Baseline |",
+                        "| --- | --- | --- | --- |",
+                        "| adoption-reports/proposed-quality.md | adopted | weights/quality.json | baseline.json |",
+                        "| adoption-reports/proposed.md | blocked | weights/proposed.json | baseline.json |",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            target = suggest_next_target(iteration_log, adoption_index)
+            rendered = render_next_target(target)
+
+        self.assertIn("remaining blocked", target.title.lower())
+        self.assertIn("adopted_reports=adoption-reports/proposed-quality.md", rendered)
+        self.assertIn("python -m reopt.explain_adoption", rendered)
+
     def test_calibration_preview_reports_regression_diff(self) -> None:
         outcome = OutcomeRecord(
             graph_id="tight-research-seed",
@@ -384,7 +421,10 @@ class HeuristicSchedulerTest(unittest.TestCase):
                     missed_optional=0.45,
                 ),
             )
-            write_seed_snapshot(baseline_path)
+            baseline_path.write_text(
+                export_seed_runs_json(UtilityWeights(quality=1.0)) + "\n",
+                encoding="utf-8",
+            )
 
             report = explain_blocked_adoption(weights_path, baseline_path)
             wrote = write_smaller_experiment(smaller_path, weights_path, baseline_path)

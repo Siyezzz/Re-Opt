@@ -1,16 +1,16 @@
 # Next Re-Opt Target
 
-title: Review the clean smaller adoption experiment
+title: Gather evidence for remaining blocked weight increments
 
-rationale: A blocked proposal now has at least one clean smaller experiment. The next optimization should decide whether to adopt that reversible step or gather more outcome evidence before changing the baseline.
+rationale: A smaller utility-weight experiment has been adopted, but the larger proposal still contains blocked increments. The next optimization should collect another outcome or split the remaining increments before changing more weights.
 
 Evidence:
 
-- latest_next_refinement=Decide whether to adopt the clean smaller experiment into the baseline or gather another outcome record before changing committed utility weights.
+- latest_next_refinement=Gather another outcome record before proposing more utility-weight changes, so the same tight-research outcome is not repeatedly reused to push quality upward.
+- adopted_reports=adoption-reports/proposed-quality-seed.md
 - blocked_reports=adoption-reports/proposed-seed.md
-- clean_reports=adoption-reports/proposed-quality-seed.md
 
 Suggested commands:
 
-- `python -m reopt.adopt weights/proposed-quality-seed.json`
+- `python -m reopt.explain_adoption weights/proposed-seed.json`
 - `python -m reopt.regression --check`

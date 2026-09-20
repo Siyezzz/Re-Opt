@@ -11,7 +11,7 @@
         "serial_minutes": 90,
         "strategy": "critical-path-a-star-v0",
         "total_value": 4.2,
-        "utility": 1.963,
+        "utility": 2.173,
         "value_coverage": 1.0,
         "warnings": []
       },
@@ -25,7 +25,7 @@
         "serial_minutes": 90,
         "strategy": "budget-pruning-v0",
         "total_value": 4.2,
-        "utility": 1.963,
+        "utility": 2.173,
         "value_coverage": 1.0,
         "warnings": []
       }
@@ -63,12 +63,12 @@
     "run_id": "coding-debug-seed:critical-path-a-star-v0",
     "selected_reason": "critical-path-a-star-v0 fits hard budgets with value=4.2, coverage=1.0, missed_optional=0, risk=3.05, tokens=8800, parallel_minutes=90.",
     "selected_strategy": "critical-path-a-star-v0",
-    "selected_utility": 1.963,
+    "selected_utility": 2.173,
     "utility_weights": {
       "minute": 0.01,
       "minute_overrun": 0.08,
       "missed_optional": 0.25,
-      "quality": 1.0,
+      "quality": 1.05,
       "risk": 0.15,
       "token": 0.0001,
       "token_overrun_multiplier": 4.0
@@ -86,7 +86,7 @@
         "serial_minutes": 105,
         "strategy": "critical-path-a-star-v0",
         "total_value": 4.2,
-        "utility": 1.648,
+        "utility": 1.858,
         "value_coverage": 1.0,
         "warnings": []
       },
@@ -100,7 +100,7 @@
         "serial_minutes": 105,
         "strategy": "budget-pruning-v0",
         "total_value": 4.2,
-        "utility": 1.648,
+        "utility": 1.858,
         "value_coverage": 1.0,
         "warnings": []
       }
@@ -138,12 +138,12 @@
     "run_id": "research-synthesis-seed:critical-path-a-star-v0",
     "selected_reason": "critical-path-a-star-v0 fits hard budgets with value=4.2, coverage=1.0, missed_optional=0, risk=2.75, tokens=10900, parallel_minutes=105.",
     "selected_strategy": "critical-path-a-star-v0",
-    "selected_utility": 1.648,
+    "selected_utility": 1.858,
     "utility_weights": {
       "minute": 0.01,
       "minute_overrun": 0.08,
       "missed_optional": 0.25,
-      "quality": 1.0,
+      "quality": 1.05,
       "risk": 0.15,
       "token": 0.0001,
       "token_overrun_multiplier": 4.0
@@ -161,7 +161,7 @@
         "serial_minutes": 83,
         "strategy": "critical-path-a-star-v0",
         "total_value": 3.65,
-        "utility": 1.087,
+        "utility": 1.27,
         "value_coverage": 1.0,
         "warnings": [
           "Estimated tokens 8800 exceed budget 7000.",
@@ -178,7 +178,7 @@
         "serial_minutes": 58,
         "strategy": "budget-pruning-v0",
         "total_value": 3.65,
-        "utility": 1.552,
+        "utility": 1.713,
         "value_coverage": 0.877,
         "warnings": [
           "Dropped optional nodes to fit budget: secondary_sweep."
@@ -218,12 +218,12 @@
     "run_id": "tight-research-seed:budget-pruning-v0",
     "selected_reason": "budget-pruning-v0 fits hard budgets with value=3.2, coverage=0.877, missed_optional=0.45, risk=2.1, tokens=6400, parallel_minutes=58.",
     "selected_strategy": "budget-pruning-v0",
-    "selected_utility": 1.552,
+    "selected_utility": 1.713,
     "utility_weights": {
       "minute": 0.01,
       "minute_overrun": 0.08,
       "missed_optional": 0.25,
-      "quality": 1.0,
+      "quality": 1.05,
       "risk": 0.15,
       "token": 0.0001,
       "token_overrun_multiplier": 4.0

@@ -9,6 +9,7 @@ from typing import Any
 
 from .diff import diff_exports, load_export
 from .export import export_seed_runs_json
+from .models import UtilityWeights
 from .outcomes import load_utility_weights
 from .regression import DEFAULT_BASELINE, find_regression_failures
 
@@ -28,7 +29,7 @@ def adoption_checklist(
         allow_strategy_change=False,
         allow_warning_increase=False,
     )
-    status = "blocked" if failures else "clean"
+    status = _adoption_status(weights, baseline, failures)
     lines = [
         "# Utility Weight Adoption Checklist",
         "",
@@ -55,6 +56,18 @@ def adoption_checklist(
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def _adoption_status(
+    weights: UtilityWeights,
+    baseline: list[dict[str, Any]],
+    failures: list[str],
+) -> str:
+    if failures:
+        return "blocked"
+    if baseline and baseline[0].get("utility_weights") == weights.to_dict():
+        return "adopted"
+    return "clean"
 
 
 def main() -> None:

@@ -2,7 +2,7 @@
 
 weights: weights/proposed-quality-seed.json
 baseline: benchmark-results/seed-baseline.json
-status: clean
+status: adopted
 
 Required adoption steps:
 
@@ -16,17 +16,17 @@ Required adoption steps:
 ## Select a scheduler for: Answer a research question under a tight budget
 
 - strategy: unchanged
-- utility_delta: +0.161
+- utility_delta: +0.000
 - warning_delta: +0
 
 ## Select a scheduler for: Debug a failing feature and verify the fix
 
 - strategy: unchanged
-- utility_delta: +0.210
+- utility_delta: +0.000
 - warning_delta: +0
 
 ## Select a scheduler for: Research a broad question and synthesize a position
 
 - strategy: unchanged
-- utility_delta: +0.210
+- utility_delta: +0.000
 - warning_delta: +0

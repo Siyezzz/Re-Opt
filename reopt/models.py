@@ -27,7 +27,7 @@ class ConstraintSet:
 
 @dataclass(frozen=True)
 class UtilityWeights:
-    quality: float = 1.0
+    quality: float = 1.05
     token: float = 0.0001
     minute: float = 0.01
     risk: float = 0.15
