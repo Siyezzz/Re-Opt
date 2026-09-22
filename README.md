@@ -45,6 +45,7 @@ python -m reopt.explain_adoption weights/proposed-observed-evidence.json --write
 python -m reopt.adopt weights/proposed-observed-evidence.json --write-report adoption-reports/proposed-observed-evidence.md
 python -m reopt.adopt weights/proposed-observed-quality.json --write-report adoption-reports/proposed-observed-quality.md
 python -m reopt.increment_cap weights/proposed-observed-evidence.json --write-weights weights/proposed-capped-observed-evidence.json --write-report docs/weight-caps/observed-evidence.md
+python -m reopt.outcome_consumption weights/proposed-observed-quality.json --write-report docs/outcome-consumption/proposed-observed-quality.md
 python -m reopt.evidence_review --write-simulated --candidate outcomes/simulated-next-outcome.json --write-weights weights/proposed-expanded-evidence.json --write-report docs/outcome-evidence/simulated-next-outcome.md
 python -m reopt.increment_cap weights/proposed-expanded-evidence.json --write-weights weights/proposed-capped-expanded-evidence.json --write-report docs/weight-caps/expanded-evidence.md
 python -m reopt.adoption_decision --write-report docs/adoption-decisions/capped-expanded-evidence.md
@@ -70,6 +71,7 @@ The current implementation is intentionally small:
 - `reopt.explain_adoption` explains blocked weight adoption and proposes smaller experiments
 - `reopt.outcome_intake` generates the next fresh outcome-evidence request
 - `reopt.observed_evidence` reviews fresh observed outcome evidence before adoption
+- `reopt.outcome_consumption` blocks repeated use of already-consumed outcome signals
 - `reopt.evidence_review` probes expanded outcome evidence before adoption
 - `reopt.increment_cap` searches for clean caps on blocked weight increments
 - `reopt.adoption_decision` decides whether clean capped increments are meaningful enough to adopt

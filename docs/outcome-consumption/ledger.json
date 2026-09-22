@@ -1,0 +1,13 @@
+[
+  {
+    "adoption": "adoption-reports/proposed-quality-seed.md",
+    "consumed_fields": [
+      "quality"
+    ],
+    "outcomes": [
+      "tight-research-seed/budget-pruning-v0: tokens=7600/7000, minutes=70/65, quality=0.7/0.8"
+    ],
+    "rationale": "The adopted quality-only seed increment consumed the tight-research quality gap as evidence for quality=1.05.",
+    "weights": "weights/proposed-quality-seed.json"
+  }
+]

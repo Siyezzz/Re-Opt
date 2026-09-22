@@ -46,7 +46,8 @@ jobs:
           python -m reopt.adopt weights/proposed-observed-evidence.json --write-report adoption-reports/proposed-observed-evidence.md
           python -m reopt.adopt weights/proposed-observed-quality.json --write-report adoption-reports/proposed-observed-quality.md
           python -m reopt.increment_cap weights/proposed-observed-evidence.json --write-weights weights/proposed-capped-observed-evidence.json --write-report docs/weight-caps/observed-evidence.md
-          git diff --exit-code docs/adoption-analysis/proposed-observed-evidence.md weights/proposed-observed-quality.json adoption-reports/proposed-observed-evidence.md adoption-reports/proposed-observed-quality.md weights/proposed-capped-observed-evidence.json docs/weight-caps/observed-evidence.md
+          python -m reopt.outcome_consumption weights/proposed-observed-quality.json --write-report docs/outcome-consumption/proposed-observed-quality.md
+          git diff --exit-code docs/adoption-analysis/proposed-observed-evidence.md weights/proposed-observed-quality.json adoption-reports/proposed-observed-evidence.md adoption-reports/proposed-observed-quality.md weights/proposed-capped-observed-evidence.json docs/weight-caps/observed-evidence.md docs/outcome-consumption/proposed-observed-quality.md
 
       - name: Check adoption index freshness
         run: |

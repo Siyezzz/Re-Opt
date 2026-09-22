@@ -943,3 +943,35 @@ to show visible benchmark movement.
 Review whether to adopt the clean observed quality increment, or first add
 outcome-consumption tracking so the same evidence cannot repeatedly push quality
 upward.
+
+## 2026-09-22 - Outcome Consumption Guard
+
+### Objective
+
+Prevent the same outcome signal from repeatedly pushing the same utility weight
+after it has already justified an adoption.
+
+### Implementation
+
+Added:
+
+```bash
+python -m reopt.outcome_consumption weights/proposed-observed-quality.json \
+  --write-report docs/outcome-consumption/proposed-observed-quality.md
+```
+
+The initial consumption ledger records that the adopted
+`weights/proposed-quality-seed.json` change consumed the tight-research quality
+gap as evidence for the `quality` field.
+
+### Observed Result
+
+`weights/proposed-observed-quality.json` is regression-clean, but its only
+supporting quality signal is the already-consumed tight-research outcome. The
+new outcome has no quality gap, so the consumption audit blocks another quality
+adoption for now.
+
+### Next Refinement
+
+Collect unconsumed outcome evidence before raising the quality weight again, or
+extend calibration so consumed signals are excluded from repeated proposals.

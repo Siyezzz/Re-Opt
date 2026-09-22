@@ -39,6 +39,7 @@ from reopt.evidence_review import (
     write_simulated_outcome,
 )
 from reopt.observed_evidence import review_observed_evidence
+from reopt.outcome_consumption import audit_consumption, render_consumption_audit
 from reopt.increment_cap import find_largest_clean_cap, render_cap_report
 from reopt.adoption_decision import decide_adoption, render_decision
 from reopt.outcomes import (
@@ -292,6 +293,11 @@ class HeuristicSchedulerTest(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             iteration_log = Path(tmp) / "iteration-log.md"
             adoption_index = Path(tmp) / "adoption-index.md"
+            evidence_review = Path(tmp) / "missing-evidence.md"
+            cap_review = Path(tmp) / "missing-cap.md"
+            decision_report = Path(tmp) / "missing-decision.md"
+            observed_review = Path(tmp) / "missing-observed.md"
+            consumption_audit = Path(tmp) / "missing-consumption.md"
             iteration_log.write_text(
                 "\n".join(
                     [
@@ -317,7 +323,15 @@ class HeuristicSchedulerTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            target = suggest_next_target(iteration_log, adoption_index)
+            target = suggest_next_target(
+                iteration_log,
+                adoption_index,
+                evidence_review,
+                cap_review,
+                decision_report,
+                observed_review,
+                consumption_audit,
+            )
             rendered = render_next_target(target)
 
         self.assertIn("blocked adoption", target.title.lower())
@@ -328,6 +342,11 @@ class HeuristicSchedulerTest(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             iteration_log = Path(tmp) / "iteration-log.md"
             adoption_index = Path(tmp) / "adoption-index.md"
+            evidence_review = Path(tmp) / "missing-evidence.md"
+            cap_review = Path(tmp) / "missing-cap.md"
+            decision_report = Path(tmp) / "missing-decision.md"
+            observed_review = Path(tmp) / "missing-observed.md"
+            consumption_audit = Path(tmp) / "missing-consumption.md"
             iteration_log.write_text(
                 "\n".join(
                     [
@@ -354,7 +373,15 @@ class HeuristicSchedulerTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            target = suggest_next_target(iteration_log, adoption_index)
+            target = suggest_next_target(
+                iteration_log,
+                adoption_index,
+                evidence_review,
+                cap_review,
+                decision_report,
+                observed_review,
+                consumption_audit,
+            )
             rendered = render_next_target(target)
 
         self.assertIn("clean smaller", target.title.lower())
@@ -758,6 +785,79 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("status: clean", report)
         self.assertNotIn("synthetic simulation", report)
 
+    def test_outcome_consumption_blocks_reused_quality_signal(self) -> None:
+        with TemporaryDirectory() as tmp:
+            existing_path = Path(tmp) / "existing.json"
+            candidate_path = Path(tmp) / "candidate.json"
+            ledger_path = Path(tmp) / "ledger.json"
+            weights_path = Path(tmp) / "weights.json"
+            baseline_path = Path(tmp) / "baseline.json"
+            consumed_key = (
+                "tight-research-seed/budget-pruning-v0: "
+                "tokens=7600/7000, minutes=70/65, quality=0.7/0.8"
+            )
+            dump_outcomes(
+                existing_path,
+                (
+                    OutcomeRecord(
+                        graph_id="tight-research-seed",
+                        strategy="budget-pruning-v0",
+                        observed_quality=0.7,
+                        target_quality=0.8,
+                        actual_tokens=7600,
+                        token_budget=7000,
+                        actual_minutes=70,
+                        time_budget_minutes=65,
+                        missed_optional_harm=0.4,
+                    ),
+                ),
+            )
+            dump_outcomes(
+                candidate_path,
+                (
+                    OutcomeRecord(
+                        graph_id="coding-debug-seed",
+                        strategy="critical-path-a-star-v0",
+                        observed_quality=0.95,
+                        target_quality=0.8,
+                        actual_tokens=10500,
+                        token_budget=12000,
+                        actual_minutes=80,
+                        time_budget_minutes=90,
+                        missed_optional_harm=0.0,
+                    ),
+                ),
+            )
+            ledger_path.write_text(
+                json.dumps(
+                    [
+                        {
+                            "adoption": "adoption-reports/proposed-quality-seed.md",
+                            "weights": "weights/proposed-quality-seed.json",
+                            "consumed_fields": ["quality"],
+                            "outcomes": [consumed_key],
+                            "rationale": "already used quality evidence",
+                        }
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            dump_utility_weights(weights_path, UtilityWeights(quality=1.075))
+            write_seed_snapshot(baseline_path)
+
+            audit = audit_consumption(
+                weights_path,
+                existing_path,
+                candidate_path,
+                ledger_path,
+                baseline_path,
+            )
+            rendered = render_consumption_audit(audit)
+
+        self.assertEqual(audit.status, "blocked")
+        self.assertIn("quality", audit.blocked_fields)
+        self.assertIn("already been consumed", rendered)
+
     def test_next_target_advances_after_capped_decision_is_deferred(self) -> None:
         with TemporaryDirectory() as tmp:
             iteration_log = Path(tmp) / "iteration-log.md"
@@ -823,6 +923,8 @@ class HeuristicSchedulerTest(unittest.TestCase):
             cap_review = Path(tmp) / "cap.md"
             decision_report = Path(tmp) / "decision.md"
             observed_review = Path(tmp) / "observed.md"
+            consumption_audit = Path(tmp) / "missing-consumption.md"
+            consumption_audit = Path(tmp) / "missing-consumption.md"
             iteration_log.write_text(
                 "\n".join(
                     [
@@ -869,6 +971,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
                 cap_review,
                 decision_report,
                 observed_review,
+                consumption_audit,
             )
             rendered = render_next_target(target)
 
@@ -884,6 +987,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
             cap_review = Path(tmp) / "cap.md"
             decision_report = Path(tmp) / "decision.md"
             observed_review = Path(tmp) / "observed.md"
+            consumption_audit = Path(tmp) / "missing-consumption.md"
             iteration_log.write_text(
                 "# Iteration Log\n\n### Next Refinement\n\nSplit observed increments.\n",
                 encoding="utf-8",
@@ -913,12 +1017,60 @@ class HeuristicSchedulerTest(unittest.TestCase):
                 cap_review,
                 decision_report,
                 observed_review,
+                consumption_audit,
             )
             rendered = render_next_target(target)
 
         self.assertIn("clean smaller", target.title.lower())
         self.assertIn("clean_reports=adoption-reports/proposed-observed-quality.md", rendered)
         self.assertIn("python -m reopt.adopt weights/quality.json", rendered)
+
+    def test_next_target_uses_consumption_audit_before_clean_adoption(self) -> None:
+        with TemporaryDirectory() as tmp:
+            iteration_log = Path(tmp) / "iteration-log.md"
+            adoption_index = Path(tmp) / "adoption-index.md"
+            evidence_review = Path(tmp) / "review.md"
+            cap_review = Path(tmp) / "cap.md"
+            decision_report = Path(tmp) / "decision.md"
+            observed_review = Path(tmp) / "observed.md"
+            consumption_audit = Path(tmp) / "consumption.md"
+            iteration_log.write_text(
+                "# Iteration Log\n\n### Next Refinement\n\nReview clean proposal.\n",
+                encoding="utf-8",
+            )
+            adoption_index.write_text(
+                "\n".join(
+                    [
+                        "# Adoption Report Index",
+                        "",
+                        "| Report | Status | Weights | Baseline |",
+                        "| --- | --- | --- | --- |",
+                        "| adoption-reports/proposed-observed-quality.md | clean | weights/quality.json | baseline.json |",
+                        "| adoption-reports/proposed-observed-evidence.md | blocked | weights/full.json | baseline.json |",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            evidence_review.write_text("source: synthetic simulation\n\nstatus: blocked\n", encoding="utf-8")
+            cap_review.write_text("largest_clean_ratio: 0.011\n\nstatus: clean\n", encoding="utf-8")
+            decision_report.write_text("decision: defer\n", encoding="utf-8")
+            observed_review.write_text("source: observed task run\n\nstatus: blocked\n", encoding="utf-8")
+            consumption_audit.write_text("status: blocked\n", encoding="utf-8")
+
+            target = suggest_next_target(
+                iteration_log,
+                adoption_index,
+                evidence_review,
+                cap_review,
+                decision_report,
+                observed_review,
+                consumption_audit,
+            )
+            rendered = render_next_target(target)
+
+        self.assertIn("unconsumed outcome evidence", target.title.lower())
+        self.assertIn("consumption_audit=", rendered)
+        self.assertIn("python -m reopt.outcome_consumption", rendered)
 
     def test_calibration_preview_reports_regression_diff(self) -> None:
         outcome = OutcomeRecord(

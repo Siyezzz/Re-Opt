@@ -22,6 +22,7 @@ def suggest_next_target(
     cap_review: Path = Path("docs/weight-caps/expanded-evidence.md"),
     decision_report: Path = Path("docs/adoption-decisions/capped-expanded-evidence.md"),
     observed_review: Path = Path("docs/outcome-evidence/observed-next-outcome.md"),
+    consumption_audit: Path = Path("docs/outcome-consumption/proposed-observed-quality.md"),
 ) -> NextTarget:
     log_text = iteration_log.read_text(encoding="utf-8")
     index_text = adoption_index.read_text(encoding="utf-8")
@@ -29,6 +30,30 @@ def suggest_next_target(
     blocked_reports = _reports_by_status(index_text, "blocked")
     clean_reports = _reports_by_status(index_text, "clean")
     adopted_reports = _reports_by_status(index_text, "adopted")
+
+    if blocked_reports and clean_reports and _consumption_audit_blocked(consumption_audit):
+        clean_report_paths = tuple(report for report, _weights in clean_reports)
+        blocked_report_paths = tuple(report for report, _weights in blocked_reports)
+        return NextTarget(
+            title="Collect unconsumed outcome evidence before quality adoption",
+            rationale=(
+                "A clean observed-quality proposal exists, but the consumption "
+                "audit shows its supporting quality signal has already been used "
+                "for an earlier adoption. The next optimization should gather "
+                "new unconsumed quality evidence before raising the quality weight again."
+            ),
+            evidence=(
+                f"latest_next_refinement={latest_refinement}",
+                f"blocked_reports={', '.join(blocked_report_paths)}",
+                f"clean_reports={', '.join(clean_report_paths)}",
+                f"consumption_audit={consumption_audit.as_posix()}",
+            ),
+            suggested_commands=(
+                "python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md",
+                "python -m reopt.outcome_consumption weights/proposed-observed-quality.json --write-report docs/outcome-consumption/proposed-observed-quality.md",
+                "python -m reopt.regression --check",
+            ),
+        )
 
     if blocked_reports and clean_reports:
         clean_report_paths = tuple(report for report, _weights in clean_reports)
@@ -277,6 +302,13 @@ def _observed_review_blocked(path: Path) -> bool:
     return "source: observed task run" in text and "status: blocked" in text
 
 
+def _consumption_audit_blocked(path: Path) -> bool:
+    if not path.exists():
+        return False
+    text = path.read_text(encoding="utf-8")
+    return "status: blocked" in text
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Suggest the next Re-Opt refinement target.")
     parser.add_argument(
@@ -315,6 +347,12 @@ def main() -> None:
         default=Path("docs/outcome-evidence/observed-next-outcome.md"),
         help="Observed outcome evidence review Markdown path.",
     )
+    parser.add_argument(
+        "--consumption-audit",
+        type=Path,
+        default=Path("docs/outcome-consumption/proposed-observed-quality.md"),
+        help="Outcome-consumption audit Markdown path.",
+    )
     parser.add_argument("--write", type=Path, help="Write the suggestion to a Markdown file.")
     args = parser.parse_args()
     rendered = render_next_target(
@@ -325,6 +363,7 @@ def main() -> None:
             args.cap_review,
             args.decision_report,
             args.observed_review,
+            args.consumption_audit,
         )
     )
     if args.write:
