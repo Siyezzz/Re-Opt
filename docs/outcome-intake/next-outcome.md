@@ -1,8 +1,8 @@
 # Outcome Evidence Intake
 
-title: Collect a new outcome before more weight changes
+title: Collect unconsumed quality evidence
 
-rationale: The next target asks for evidence before changing the remaining blocked weight increments. A new outcome should come from a different task shape or a fresh run, so calibration does not repeatedly consume the same tight-research observation.
+rationale: The next target asks for a quality signal that has not already been used to justify a quality-weight adoption. A fresh outcome should show an observed quality gap before the quality weight is raised again.
 
 Do not reuse:
 
@@ -20,6 +20,10 @@ Required fields:
 - time_budget_minutes
 - missed_optional_harm
 
+Required signals:
+
+- At least one new outcome must have observed_quality below target_quality, and that outcome must not already be consumed for quality.
+
 Suggested JSON record:
 
 ```json
@@ -29,7 +33,7 @@ Suggested JSON record:
     "actual_tokens": 0,
     "graph_id": "coding-debug-seed",
     "missed_optional_harm": 0.0,
-    "observed_quality": 0.0,
+    "observed_quality": 0.65,
     "strategy": "critical-path-a-star-v0",
     "target_quality": 0.8,
     "time_budget_minutes": 90,
@@ -40,7 +44,7 @@ Suggested JSON record:
 
 Suggested commands:
 
-- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json`
+- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for quality`
 - `python -m reopt.outcomes outcomes/next-outcome.json`
 - `python -m reopt.calibrate outcomes/next-outcome.json`
 - `python -m reopt.explain_adoption weights/proposed-seed.json`

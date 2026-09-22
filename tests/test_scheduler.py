@@ -580,6 +580,50 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("python -m reopt.outcome_intake --validate", rendered)
         self.assertIn("python -m reopt.calibrate outcomes/next-outcome.json", rendered)
 
+    def test_outcome_intake_requests_unconsumed_quality_signal(self) -> None:
+        with TemporaryDirectory() as tmp:
+            outcomes_path = Path(tmp) / "outcomes.json"
+            next_target_path = Path(tmp) / "next-target.md"
+            dump_outcomes(
+                outcomes_path,
+                (
+                    OutcomeRecord(
+                        graph_id="tight-research-seed",
+                        strategy="budget-pruning-v0",
+                        observed_quality=0.7,
+                        target_quality=0.8,
+                        actual_tokens=7600,
+                        token_budget=7000,
+                        actual_minutes=70,
+                        time_budget_minutes=65,
+                        missed_optional_harm=0.4,
+                    ),
+                    OutcomeRecord(
+                        graph_id="coding-debug-seed",
+                        strategy="critical-path-a-star-v0",
+                        observed_quality=0.95,
+                        target_quality=0.8,
+                        actual_tokens=10500,
+                        token_budget=12000,
+                        actual_minutes=80,
+                        time_budget_minutes=90,
+                        missed_optional_harm=0.0,
+                    ),
+                ),
+            )
+            next_target_path.write_text(
+                "# Next Re-Opt Target\n\ntitle: Collect unconsumed outcome evidence before quality adoption\n",
+                encoding="utf-8",
+            )
+
+            request = suggest_outcome_intake(outcomes_path, next_target_path)
+            rendered = render_outcome_intake(request)
+
+        self.assertIn("unconsumed quality", request.title.lower())
+        self.assertLess(request.suggested_record.observed_quality, request.suggested_record.target_quality)
+        self.assertIn("Required signals:", rendered)
+        self.assertIn("--require-unconsumed-for quality", rendered)
+
     def test_outcome_intake_validation_blocks_placeholders_and_reuse(self) -> None:
         with TemporaryDirectory() as tmp:
             existing_path = Path(tmp) / "existing.json"
@@ -620,6 +664,97 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("duplicates an existing outcome record", report)
         self.assertIn("actual_tokens must be observed", report)
         self.assertIn("observed_quality must be observed", report)
+
+    def test_outcome_intake_validation_requires_unconsumed_signal(self) -> None:
+        with TemporaryDirectory() as tmp:
+            existing_path = Path(tmp) / "existing.json"
+            clean_candidate_path = Path(tmp) / "clean-candidate.json"
+            blocked_candidate_path = Path(tmp) / "blocked-candidate.json"
+            ledger_path = Path(tmp) / "ledger.json"
+            consumed_key = (
+                "tight-research-seed/budget-pruning-v0: "
+                "tokens=7600/7000, minutes=70/65, quality=0.7/0.8"
+            )
+            dump_outcomes(
+                existing_path,
+                (
+                    OutcomeRecord(
+                        graph_id="tight-research-seed",
+                        strategy="budget-pruning-v0",
+                        observed_quality=0.7,
+                        target_quality=0.8,
+                        actual_tokens=7600,
+                        token_budget=7000,
+                        actual_minutes=70,
+                        time_budget_minutes=65,
+                        missed_optional_harm=0.4,
+                    ),
+                ),
+            )
+            dump_outcomes(
+                blocked_candidate_path,
+                (
+                    OutcomeRecord(
+                        graph_id="coding-debug-seed",
+                        strategy="critical-path-a-star-v0",
+                        observed_quality=0.95,
+                        target_quality=0.8,
+                        actual_tokens=10500,
+                        token_budget=12000,
+                        actual_minutes=80,
+                        time_budget_minutes=90,
+                        missed_optional_harm=0.0,
+                    ),
+                ),
+            )
+            dump_outcomes(
+                clean_candidate_path,
+                (
+                    OutcomeRecord(
+                        graph_id="research-synthesis-seed",
+                        strategy="critical-path-a-star-v0",
+                        observed_quality=0.65,
+                        target_quality=0.8,
+                        actual_tokens=14000,
+                        token_budget=16000,
+                        actual_minutes=110,
+                        time_budget_minutes=120,
+                        missed_optional_harm=0.0,
+                    ),
+                ),
+            )
+            ledger_path.write_text(
+                json.dumps(
+                    [
+                        {
+                            "adoption": "adoption-reports/proposed-quality-seed.md",
+                            "weights": "weights/proposed-quality-seed.json",
+                            "consumed_fields": ["quality"],
+                            "outcomes": [consumed_key],
+                            "rationale": "already used quality evidence",
+                        }
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            blocked_ok, blocked_failures = validate_outcome_intake(
+                blocked_candidate_path,
+                existing_path,
+                require_unconsumed_for="quality",
+                ledger_path=ledger_path,
+            )
+            clean_ok, clean_failures = validate_outcome_intake(
+                clean_candidate_path,
+                existing_path,
+                require_unconsumed_for="quality",
+                ledger_path=ledger_path,
+            )
+
+        self.assertFalse(blocked_ok)
+        self.assertTrue(any("no unconsumed quality signal" in failure for failure in blocked_failures))
+        self.assertTrue(clean_ok)
+        self.assertEqual(clean_failures, ())
 
     def test_evidence_review_keeps_synthetic_probe_separate(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -1070,6 +1205,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
 
         self.assertIn("unconsumed outcome evidence", target.title.lower())
         self.assertIn("consumption_audit=", rendered)
+        self.assertIn("--require-unconsumed-for quality", rendered)
         self.assertIn("python -m reopt.outcome_consumption", rendered)
 
     def test_calibration_preview_reports_regression_diff(self) -> None:

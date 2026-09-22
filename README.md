@@ -40,6 +40,7 @@ python -m reopt.adopt weights/proposed-seed.json --write-report adoption-reports
 python -m reopt.explain_adoption weights/proposed-seed.json --write-report docs/adoption-analysis/proposed-seed.md
 python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md
 python -m reopt.outcome_intake --validate outcomes/next-outcome.json
+python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for quality
 python -m reopt.observed_evidence --candidate outcomes/next-outcome.json --write-weights weights/proposed-observed-evidence.json --write-report docs/outcome-evidence/observed-next-outcome.md --provenance "commit 69f87f4 Add capped adoption decision; 31 tests passed; regression gate passed"
 python -m reopt.explain_adoption weights/proposed-observed-evidence.json --write-report docs/adoption-analysis/proposed-observed-evidence.md --write-smaller-weights weights/proposed-observed-quality.json
 python -m reopt.adopt weights/proposed-observed-evidence.json --write-report adoption-reports/proposed-observed-evidence.md
@@ -70,6 +71,7 @@ The current implementation is intentionally small:
 - `reopt.adopt` produces a review checklist for proposed utility weights
 - `reopt.explain_adoption` explains blocked weight adoption and proposes smaller experiments
 - `reopt.outcome_intake` generates the next fresh outcome-evidence request
+- `reopt.outcome_intake --require-unconsumed-for` validates that a filled outcome supplies a new field-specific signal
 - `reopt.observed_evidence` reviews fresh observed outcome evidence before adoption
 - `reopt.outcome_consumption` blocks repeated use of already-consumed outcome signals
 - `reopt.evidence_review` probes expanded outcome evidence before adoption

@@ -50,6 +50,7 @@ def suggest_next_target(
             ),
             suggested_commands=(
                 "python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md",
+                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for quality",
                 "python -m reopt.outcome_consumption weights/proposed-observed-quality.json --write-report docs/outcome-consumption/proposed-observed-quality.md",
                 "python -m reopt.regression --check",
             ),

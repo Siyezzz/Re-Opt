@@ -975,3 +975,37 @@ adoption for now.
 
 Collect unconsumed outcome evidence before raising the quality weight again, or
 extend calibration so consumed signals are excluded from repeated proposals.
+
+## 2026-09-22 - Unconsumed Evidence Intake
+
+### Objective
+
+Make the next outcome request specific enough to satisfy the consumption guard:
+it must collect a new quality signal that has not already been used for a
+quality-weight adoption.
+
+### Implementation
+
+Extended `reopt.outcome_intake` so the current next target produces:
+
+```bash
+python -m reopt.outcome_intake --validate outcomes/next-outcome.json \
+  --require-unconsumed-for quality
+```
+
+The rendered intake now includes a required signal: at least one new outcome must
+have `observed_quality < target_quality`, and that outcome must not already be
+listed as consumed for `quality` in the consumption ledger.
+
+### Observed Result
+
+The generated intake changed from a generic "collect another outcome" request to
+`Collect unconsumed quality evidence`. Tests now cover both paths: candidates
+without a new quality gap fail the field-specific validation, while a fresh
+unconsumed quality-gap record passes.
+
+### Next Refinement
+
+Fill `outcomes/next-outcome.json` with an actual observed task run that provides
+an unconsumed quality signal, then rerun observed evidence review and
+consumption audit.
