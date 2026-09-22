@@ -1,0 +1,13 @@
+[
+  {
+    "actual_minutes": 80,
+    "actual_tokens": 10500,
+    "graph_id": "coding-debug-seed",
+    "missed_optional_harm": 0.0,
+    "observed_quality": 0.95,
+    "strategy": "critical-path-a-star-v0",
+    "target_quality": 0.8,
+    "time_budget_minutes": 90,
+    "token_budget": 12000
+  }
+]

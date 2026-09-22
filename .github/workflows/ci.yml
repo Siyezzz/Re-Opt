@@ -29,15 +29,29 @@ jobs:
           python -m reopt.adopt weights/proposed-quality-seed.json --write-report adoption-reports/proposed-quality-seed.md
           git diff --exit-code docs/adoption-analysis/proposed-seed.md weights/proposed-quality-seed.json adoption-reports/proposed-seed.md adoption-reports/proposed-quality-seed.md
 
-      - name: Check adoption index freshness
-        run: |
-          python -m reopt.report_index --write docs/adoption-index.md
-          git diff --exit-code docs/adoption-index.md
-
       - name: Check outcome intake freshness
         run: |
           python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md
           git diff --exit-code docs/outcome-intake/next-outcome.md
+
+      - name: Check observed outcome evidence freshness
+        run: |
+          python -m reopt.outcome_intake --validate outcomes/next-outcome.json
+          python -m reopt.observed_evidence --candidate outcomes/next-outcome.json --write-weights weights/proposed-observed-evidence.json --write-report docs/outcome-evidence/observed-next-outcome.md --provenance "commit 69f87f4 Add capped adoption decision; 31 tests passed; regression gate passed"
+          git diff --exit-code outcomes/next-outcome.json weights/proposed-observed-evidence.json docs/outcome-evidence/observed-next-outcome.md
+
+      - name: Check observed adoption split freshness
+        run: |
+          python -m reopt.explain_adoption weights/proposed-observed-evidence.json --write-report docs/adoption-analysis/proposed-observed-evidence.md --write-smaller-weights weights/proposed-observed-quality.json
+          python -m reopt.adopt weights/proposed-observed-evidence.json --write-report adoption-reports/proposed-observed-evidence.md
+          python -m reopt.adopt weights/proposed-observed-quality.json --write-report adoption-reports/proposed-observed-quality.md
+          python -m reopt.increment_cap weights/proposed-observed-evidence.json --write-weights weights/proposed-capped-observed-evidence.json --write-report docs/weight-caps/observed-evidence.md
+          git diff --exit-code docs/adoption-analysis/proposed-observed-evidence.md weights/proposed-observed-quality.json adoption-reports/proposed-observed-evidence.md adoption-reports/proposed-observed-quality.md weights/proposed-capped-observed-evidence.json docs/weight-caps/observed-evidence.md
+
+      - name: Check adoption index freshness
+        run: |
+          python -m reopt.report_index --write docs/adoption-index.md
+          git diff --exit-code docs/adoption-index.md
 
       - name: Check expanded evidence review freshness
         run: |

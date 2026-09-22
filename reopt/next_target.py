@@ -21,6 +21,7 @@ def suggest_next_target(
     evidence_review: Path = Path("docs/outcome-evidence/simulated-next-outcome.md"),
     cap_review: Path = Path("docs/weight-caps/expanded-evidence.md"),
     decision_report: Path = Path("docs/adoption-decisions/capped-expanded-evidence.md"),
+    observed_review: Path = Path("docs/outcome-evidence/observed-next-outcome.md"),
 ) -> NextTarget:
     log_text = iteration_log.read_text(encoding="utf-8")
     index_text = adoption_index.read_text(encoding="utf-8")
@@ -28,6 +29,52 @@ def suggest_next_target(
     blocked_reports = _reports_by_status(index_text, "blocked")
     clean_reports = _reports_by_status(index_text, "clean")
     adopted_reports = _reports_by_status(index_text, "adopted")
+
+    if blocked_reports and clean_reports:
+        clean_report_paths = tuple(report for report, _weights in clean_reports)
+        first_clean_weights = _portable_path(clean_reports[0][1])
+        blocked_report_paths = tuple(report for report, _weights in blocked_reports)
+        return NextTarget(
+            title="Review the clean smaller adoption experiment",
+            rationale=(
+                "A blocked proposal now has at least one clean smaller experiment. "
+                "The next optimization should decide whether to adopt that reversible "
+                "step or gather more outcome evidence before changing the baseline."
+            ),
+            evidence=(
+                f"latest_next_refinement={latest_refinement}",
+                f"blocked_reports={', '.join(blocked_report_paths)}",
+                f"clean_reports={', '.join(clean_report_paths)}",
+            ),
+            suggested_commands=(
+                f"python -m reopt.adopt {first_clean_weights}",
+                "python -m reopt.regression --check",
+            ),
+        )
+
+    if blocked_reports and adopted_reports and _observed_review_blocked(observed_review):
+        adopted_report_paths = tuple(report for report, _weights in adopted_reports)
+        blocked_report_paths = tuple(report for report, _weights in blocked_reports)
+        return NextTarget(
+            title="Split observed-backed blocked weight increments",
+            rationale=(
+                "A fresh observed outcome has been collected and validated, but "
+                "the combined observed-evidence weight proposal is still blocked. "
+                "The next optimization should split the observed-backed increments "
+                "before any adoption attempt."
+            ),
+            evidence=(
+                f"latest_next_refinement={latest_refinement}",
+                f"adopted_reports={', '.join(adopted_report_paths)}",
+                f"blocked_reports={', '.join(blocked_report_paths)}",
+                f"observed_review={observed_review.as_posix()}",
+            ),
+            suggested_commands=(
+                "python -m reopt.explain_adoption weights/proposed-observed-evidence.json",
+                "python -m reopt.increment_cap weights/proposed-observed-evidence.json --write-weights weights/proposed-capped-observed-evidence.json --write-report docs/weight-caps/observed-evidence.md",
+                "python -m reopt.regression --check",
+            ),
+        )
 
     if blocked_reports and adopted_reports and _decision_deferred(decision_report):
         adopted_report_paths = tuple(report for report, _weights in adopted_reports)
@@ -120,28 +167,6 @@ def suggest_next_target(
                 "python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md",
                 "python -m reopt.outcome_intake --validate outcomes/next-outcome.json",
                 "python -m reopt.explain_adoption weights/proposed-seed.json",
-                "python -m reopt.regression --check",
-            ),
-        )
-
-    if blocked_reports and clean_reports:
-        clean_report_paths = tuple(report for report, _weights in clean_reports)
-        first_clean_weights = _portable_path(clean_reports[0][1])
-        blocked_report_paths = tuple(report for report, _weights in blocked_reports)
-        return NextTarget(
-            title="Review the clean smaller adoption experiment",
-            rationale=(
-                "A blocked proposal now has at least one clean smaller experiment. "
-                "The next optimization should decide whether to adopt that reversible "
-                "step or gather more outcome evidence before changing the baseline."
-            ),
-            evidence=(
-                f"latest_next_refinement={latest_refinement}",
-                f"blocked_reports={', '.join(blocked_report_paths)}",
-                f"clean_reports={', '.join(clean_report_paths)}",
-            ),
-            suggested_commands=(
-                f"python -m reopt.adopt {first_clean_weights}",
                 "python -m reopt.regression --check",
             ),
         )
@@ -245,6 +270,13 @@ def _decision_deferred(path: Path) -> bool:
     return "decision: defer" in text
 
 
+def _observed_review_blocked(path: Path) -> bool:
+    if not path.exists():
+        return False
+    text = path.read_text(encoding="utf-8")
+    return "source: observed task run" in text and "status: blocked" in text
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Suggest the next Re-Opt refinement target.")
     parser.add_argument(
@@ -277,6 +309,12 @@ def main() -> None:
         default=Path("docs/adoption-decisions/capped-expanded-evidence.md"),
         help="Capped proposal adoption decision Markdown path.",
     )
+    parser.add_argument(
+        "--observed-review",
+        type=Path,
+        default=Path("docs/outcome-evidence/observed-next-outcome.md"),
+        help="Observed outcome evidence review Markdown path.",
+    )
     parser.add_argument("--write", type=Path, help="Write the suggestion to a Markdown file.")
     args = parser.parse_args()
     rendered = render_next_target(
@@ -286,6 +324,7 @@ def main() -> None:
             args.evidence_review,
             args.cap_review,
             args.decision_report,
+            args.observed_review,
         )
     )
     if args.write:

@@ -871,3 +871,75 @@ changing committed default weights again.
 
 Collect a real observed outcome record, validate it through outcome intake, and
 only then rerun calibration or adoption review.
+
+## 2026-09-22 - Observed Outcome Evidence
+
+### Objective
+
+Replace the synthetic-only planning probe with a fresh observed outcome from the
+completed capped-adoption-decision engineering loop.
+
+### Implementation
+
+Added:
+
+```bash
+python -m reopt.observed_evidence \
+  --candidate outcomes/next-outcome.json \
+  --write-weights weights/proposed-observed-evidence.json \
+  --write-report docs/outcome-evidence/observed-next-outcome.md
+```
+
+The observed candidate records the `coding-debug-seed/critical-path-a-star-v0`
+task shape with provenance pointing to commit `69f87f4`, passing tests, and the
+regression gate. The review keeps `source: observed task run` separate from the
+synthetic evidence path.
+
+### Observed Result
+
+The new outcome passes intake validation. Combined with the existing
+tight-research outcome, it proposes the same directional weight changes as the
+synthetic probe: `quality=1.075`, `token=0.0001043`, `minute=0.01038`, and
+`missed_optional=0.35`. Adoption is still blocked by a tight-research utility
+drop of `-0.015`.
+
+### Next Refinement
+
+Split or cap the observed-backed blocked increments before any adoption attempt.
+
+## 2026-09-22 - Observed Evidence Split
+
+### Objective
+
+Split the observed-backed blocked utility-weight proposal into smaller,
+reviewable increments.
+
+### Implementation
+
+Generated:
+
+```bash
+python -m reopt.explain_adoption weights/proposed-observed-evidence.json \
+  --write-report docs/adoption-analysis/proposed-observed-evidence.md \
+  --write-smaller-weights weights/proposed-observed-quality.json
+python -m reopt.adopt weights/proposed-observed-quality.json \
+  --write-report adoption-reports/proposed-observed-quality.md
+python -m reopt.increment_cap weights/proposed-observed-evidence.json \
+  --write-weights weights/proposed-capped-observed-evidence.json \
+  --write-report docs/weight-caps/observed-evidence.md
+```
+
+### Observed Result
+
+The full observed-evidence proposal remains blocked by a `-0.015`
+tight-research utility drop. Weight attribution shows `quality` alone has
+non-negative utility deltas across all seed objectives, while `token`, `minute`,
+and `missed_optional` remain negative. The quality-only observed proposal is
+clean; the uniform cap is also clean but only at ratio `0.011`, again too small
+to show visible benchmark movement.
+
+### Next Refinement
+
+Review whether to adopt the clean observed quality increment, or first add
+outcome-consumption tracking so the same evidence cannot repeatedly push quality
+upward.
