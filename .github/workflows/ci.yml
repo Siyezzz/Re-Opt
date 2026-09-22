@@ -49,6 +49,11 @@ jobs:
           python -m reopt.increment_cap weights/proposed-expanded-evidence.json --write-weights weights/proposed-capped-expanded-evidence.json --write-report docs/weight-caps/expanded-evidence.md
           git diff --exit-code weights/proposed-capped-expanded-evidence.json docs/weight-caps/expanded-evidence.md
 
+      - name: Check capped adoption decision freshness
+        run: |
+          python -m reopt.adoption_decision --write-report docs/adoption-decisions/capped-expanded-evidence.md
+          git diff --exit-code docs/adoption-decisions/capped-expanded-evidence.md
+
       - name: Check next target freshness
         run: |
           python -m reopt.next_target --write docs/next-target.md

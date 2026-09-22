@@ -20,6 +20,7 @@ def suggest_next_target(
     adoption_index: Path = Path("docs/adoption-index.md"),
     evidence_review: Path = Path("docs/outcome-evidence/simulated-next-outcome.md"),
     cap_review: Path = Path("docs/weight-caps/expanded-evidence.md"),
+    decision_report: Path = Path("docs/adoption-decisions/capped-expanded-evidence.md"),
 ) -> NextTarget:
     log_text = iteration_log.read_text(encoding="utf-8")
     index_text = adoption_index.read_text(encoding="utf-8")
@@ -27,6 +28,31 @@ def suggest_next_target(
     blocked_reports = _reports_by_status(index_text, "blocked")
     clean_reports = _reports_by_status(index_text, "clean")
     adopted_reports = _reports_by_status(index_text, "adopted")
+
+    if blocked_reports and adopted_reports and _decision_deferred(decision_report):
+        adopted_report_paths = tuple(report for report, _weights in adopted_reports)
+        blocked_report_paths = tuple(report for report, _weights in blocked_reports)
+        return NextTarget(
+            title="Collect observed evidence before adopting capped increments",
+            rationale=(
+                "The capped expanded-evidence proposal is clean but too small to "
+                "show a benchmark effect, and its supporting evidence is synthetic. "
+                "The next optimization should collect observed task evidence before "
+                "changing default utility weights again."
+            ),
+            evidence=(
+                f"latest_next_refinement={latest_refinement}",
+                f"adopted_reports={', '.join(adopted_report_paths)}",
+                f"blocked_reports={', '.join(blocked_report_paths)}",
+                f"decision_report={decision_report.as_posix()}",
+            ),
+            suggested_commands=(
+                "python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md",
+                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json",
+                "python -m reopt.calibrate outcomes/next-outcome.json",
+                "python -m reopt.regression --check",
+            ),
+        )
 
     if blocked_reports and adopted_reports and _cap_review_clean(cap_review):
         adopted_report_paths = tuple(report for report, _weights in adopted_reports)
@@ -212,6 +238,13 @@ def _cap_review_clean(path: Path) -> bool:
     return "largest_clean_ratio:" in text and "status: clean" in text
 
 
+def _decision_deferred(path: Path) -> bool:
+    if not path.exists():
+        return False
+    text = path.read_text(encoding="utf-8")
+    return "decision: defer" in text
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Suggest the next Re-Opt refinement target.")
     parser.add_argument(
@@ -238,6 +271,12 @@ def main() -> None:
         default=Path("docs/weight-caps/expanded-evidence.md"),
         help="Increment cap review Markdown path.",
     )
+    parser.add_argument(
+        "--decision-report",
+        type=Path,
+        default=Path("docs/adoption-decisions/capped-expanded-evidence.md"),
+        help="Capped proposal adoption decision Markdown path.",
+    )
     parser.add_argument("--write", type=Path, help="Write the suggestion to a Markdown file.")
     args = parser.parse_args()
     rendered = render_next_target(
@@ -246,6 +285,7 @@ def main() -> None:
             args.adoption_index,
             args.evidence_review,
             args.cap_review,
+            args.decision_report,
         )
     )
     if args.write:

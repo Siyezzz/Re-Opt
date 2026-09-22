@@ -1,17 +1,19 @@
 # Next Re-Opt Target
 
-title: Review the capped expanded-evidence proposal
+title: Collect observed evidence before adopting capped increments
 
-rationale: The remaining blocked increments now have a capped clean proposal. The next optimization should decide whether this tiny reversible step is meaningful enough to adopt or should wait for observed evidence.
+rationale: The capped expanded-evidence proposal is clean but too small to show a benchmark effect, and its supporting evidence is synthetic. The next optimization should collect observed task evidence before changing default utility weights again.
 
 Evidence:
 
-- latest_next_refinement=Review whether the capped expanded-evidence proposal is meaningful enough to adopt, or whether it should wait for observed evidence instead of synthetic planning probes.
+- latest_next_refinement=Collect a real observed outcome record, validate it through outcome intake, and only then rerun calibration or adoption review.
 - adopted_reports=adoption-reports/proposed-quality-seed.md
 - blocked_reports=adoption-reports/proposed-seed.md
-- cap_review=docs/weight-caps/expanded-evidence.md
+- decision_report=docs/adoption-decisions/capped-expanded-evidence.md
 
 Suggested commands:
 
-- `python -m reopt.adopt weights/proposed-capped-expanded-evidence.json`
+- `python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md`
+- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json`
+- `python -m reopt.calibrate outcomes/next-outcome.json`
 - `python -m reopt.regression --check`

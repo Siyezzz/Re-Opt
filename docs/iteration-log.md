@@ -839,3 +839,35 @@ clean, but all selected utility deltas round to `+0.000`.
 Review whether the capped expanded-evidence proposal is meaningful enough to
 adopt, or whether it should wait for observed evidence instead of synthetic
 planning probes.
+
+## 2026-09-22 - Capped Adoption Decision
+
+### Objective
+
+Decide whether the clean capped expanded-evidence proposal should actually be
+adopted, rather than treating regression-clean as sufficient by itself.
+
+### Implementation
+
+Added:
+
+```bash
+python -m reopt.adoption_decision \
+  --write-report docs/adoption-decisions/capped-expanded-evidence.md
+```
+
+The command combines the capped proposal adoption checklist, cap ratio, and
+evidence source into an explicit decision report. `reopt.next_target` now reads
+that report before suggesting the next refinement.
+
+### Observed Result
+
+The capped proposal is clean, but the largest clean cap is only `0.011`, every
+seed utility delta rounds to `+0.000`, and the supporting evidence is synthetic.
+The decision is therefore `defer`: wait for observed task evidence before
+changing committed default weights again.
+
+### Next Refinement
+
+Collect a real observed outcome record, validate it through outcome intake, and
+only then rerun calibration or adoption review.

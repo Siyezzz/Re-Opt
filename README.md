@@ -41,6 +41,7 @@ python -m reopt.explain_adoption weights/proposed-seed.json --write-report docs/
 python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md
 python -m reopt.evidence_review --write-simulated --candidate outcomes/simulated-next-outcome.json --write-weights weights/proposed-expanded-evidence.json --write-report docs/outcome-evidence/simulated-next-outcome.md
 python -m reopt.increment_cap weights/proposed-expanded-evidence.json --write-weights weights/proposed-capped-expanded-evidence.json --write-report docs/weight-caps/expanded-evidence.md
+python -m reopt.adoption_decision --write-report docs/adoption-decisions/capped-expanded-evidence.md
 python -m reopt.report_index --write docs/adoption-index.md
 python -m reopt.next_target --write docs/next-target.md
 python -m unittest discover -s tests
@@ -64,6 +65,7 @@ The current implementation is intentionally small:
 - `reopt.outcome_intake` generates the next fresh outcome-evidence request
 - `reopt.evidence_review` probes expanded outcome evidence before adoption
 - `reopt.increment_cap` searches for clean caps on blocked weight increments
+- `reopt.adoption_decision` decides whether clean capped increments are meaningful enough to adopt
 - `reopt.report_index` summarizes adoption review artifacts
 - `reopt.next_target` suggests the next refinement from current artifacts
 - `reopt.benchmarks` contains seed tasks for early comparisons
