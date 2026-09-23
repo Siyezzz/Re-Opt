@@ -73,6 +73,7 @@ def suggest_outcome_intake(
         required_signals=required_signals,
         suggested_record=suggested,
         suggested_commands=(
+            _capture_command(suggested),
             *validation_commands,
             "python -m reopt.outcomes outcomes/next-outcome.json",
             "python -m reopt.calibrate outcomes/next-outcome.json",
@@ -243,6 +244,26 @@ def _supports_required_field(outcome: OutcomeRecord, field: str) -> bool:
 def _is_placeholder_evidence_ref(value: str) -> bool:
     stripped = value.strip()
     return not stripped or stripped == "REPLACE_WITH_OBSERVED_RUN_POINTER"
+
+
+def _capture_command(outcome: OutcomeRecord) -> str:
+    return (
+        "python -m reopt.observed_run "
+        f"--graph-id {outcome.graph_id} "
+        f"--strategy {outcome.strategy} "
+        f"--observed-quality {outcome.observed_quality} "
+        f"--target-quality {outcome.target_quality} "
+        "--tokens-before TOKENS_BEFORE "
+        "--tokens-after TOKENS_AFTER "
+        f"--token-budget {outcome.token_budget} "
+        "--minutes-before MINUTES_BEFORE "
+        "--minutes-after MINUTES_AFTER "
+        f"--time-budget-minutes {outcome.time_budget_minutes} "
+        f"--missed-optional-harm {outcome.missed_optional_harm} "
+        "--evidence-ref OBSERVED_RUN_POINTER "
+        "--write outcomes/next-outcome.json "
+        "--write-report docs/outcome-evidence/observed-run-capture.md"
+    )
 
 
 def _required_unconsumed_fields(next_target: str) -> tuple[str, ...]:

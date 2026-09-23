@@ -388,6 +388,8 @@ def _expects_consumption_aware_review(latest_refinement: str) -> bool:
     return (
         "consumed signals are excluded" in latest_refinement
         or "Fill `outcomes/next-outcome.json`" in latest_refinement
+        or "missed-optional" in latest_refinement
+        or "reopt.observed_run" in latest_refinement
     )
 
 

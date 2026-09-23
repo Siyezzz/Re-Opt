@@ -1096,3 +1096,29 @@ next target honest instead of treating provenance as enough.
 Fill `outcomes/next-outcome.json` with a real observed run that has both a
 non-placeholder `evidence_ref` and unconsumed token, minute, and missed-optional
 signals; then rerun consumption-aware evidence review.
+
+## 2026-09-23 - Observed Run Capture
+
+### Objective
+
+Make the next real outcome easier to collect without hand-entering derived token
+and minute deltas.
+
+### Implementation
+
+Added `reopt.observed_run`, which captures an `OutcomeRecord` from before/after
+token and minute counters, budgets, quality, missed optional harm, and an
+`evidence_ref`. The intake document now suggests this command before validation,
+so the next run can be generated from observed counters rather than copied JSON.
+
+### Observed Result
+
+A dry run with example counters produced `actual_tokens=13000` and
+`actual_minutes=95`, matching the current required token and minute overrun
+shape. The command can also write a capture report beside the outcome record.
+
+### Next Refinement
+
+Run `reopt.observed_run` with actual Codex goal counters from a real task turn,
+then validate the resulting `outcomes/next-outcome.json` against token, minute,
+missed-optional, and evidence-ref requirements.

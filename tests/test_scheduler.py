@@ -39,6 +39,11 @@ from reopt.evidence_review import (
     write_simulated_outcome,
 )
 from reopt.observed_evidence import review_observed_evidence
+from reopt.observed_run import (
+    ObservedRunCounters,
+    outcome_from_counters,
+    render_capture_report,
+)
 from reopt.outcome_consumption import audit_consumption, render_consumption_audit
 from reopt.increment_cap import find_largest_clean_cap, render_cap_report
 from reopt.adoption_decision import decide_adoption, render_decision
@@ -228,6 +233,39 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertEqual(loaded, (outcome,))
         self.assertIn("# Utility Weight Calibration", report)
         self.assertIn("tight-research-seed/budget-pruning-v0", report)
+
+    def test_observed_run_capture_builds_outcome_from_counters(self) -> None:
+        outcome = outcome_from_counters(
+            graph_id="coding-debug-seed",
+            strategy="critical-path-a-star-v0",
+            observed_quality=0.85,
+            target_quality=0.8,
+            token_budget=12000,
+            time_budget_minutes=90,
+            missed_optional_harm=0.2,
+            evidence_ref="codex goal counters 100 -> 13100",
+            counters=ObservedRunCounters(
+                tokens_before=100,
+                tokens_after=13100,
+                minutes_before=20,
+                minutes_after=115,
+            ),
+        )
+        report = render_capture_report(
+            outcome,
+            ObservedRunCounters(
+                tokens_before=100,
+                tokens_after=13100,
+                minutes_before=20,
+                minutes_after=115,
+            ),
+        )
+
+        self.assertEqual(outcome.actual_tokens, 13000)
+        self.assertEqual(outcome.actual_minutes, 95)
+        self.assertEqual(outcome.evidence_ref, "codex goal counters 100 -> 13100")
+        self.assertIn("tokens: 100 -> 13100", report)
+        self.assertIn("missed_optional_harm: 0.2", report)
 
     def test_consumption_aware_calibration_excludes_consumed_quality_signal(self) -> None:
         base = UtilityWeights()
@@ -732,6 +770,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("--require-unconsumed-for token", rendered)
         self.assertIn("--require-unconsumed-for minute", rendered)
         self.assertIn("--require-unconsumed-for missed_optional", rendered)
+        self.assertIn("python -m reopt.observed_run", rendered)
 
     def test_outcome_intake_validation_blocks_placeholders_and_reuse(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -1368,6 +1407,71 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("consumption_audit=", rendered)
         self.assertIn("--require-unconsumed-for quality", rendered)
         self.assertIn("python -m reopt.outcome_consumption", rendered)
+
+    def test_next_target_keeps_cost_target_after_observed_run_capture_step(self) -> None:
+        with TemporaryDirectory() as tmp:
+            iteration_log = Path(tmp) / "iteration-log.md"
+            adoption_index = Path(tmp) / "adoption-index.md"
+            evidence_review = Path(tmp) / "review.md"
+            cap_review = Path(tmp) / "cap.md"
+            decision_report = Path(tmp) / "decision.md"
+            observed_review = Path(tmp) / "observed.md"
+            consumption_audit = Path(tmp) / "consumption.md"
+            consumption_aware_review = Path(tmp) / "consumption-aware.md"
+            consumption_aware_cap = Path(tmp) / "consumption-aware-cap.md"
+            iteration_log.write_text(
+                "\n".join(
+                    [
+                        "# Iteration Log",
+                        "",
+                        "### Next Refinement",
+                        "",
+                        "Run `reopt.observed_run` with actual Codex goal counters, "
+                        "then validate token, minute, missed-optional, and evidence-ref requirements.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            adoption_index.write_text(
+                "\n".join(
+                    [
+                        "# Adoption Report Index",
+                        "",
+                        "| Report | Status | Weights | Baseline |",
+                        "| --- | --- | --- | --- |",
+                        "| adoption-reports/proposed-observed-consumption-aware.md | blocked | weights/full.json | baseline.json |",
+                        "| adoption-reports/proposed-observed-quality.md | clean | weights/quality.json | baseline.json |",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            evidence_review.write_text("source: synthetic simulation\n\nstatus: blocked\n", encoding="utf-8")
+            cap_review.write_text("largest_clean_ratio: 0.011\n\nstatus: clean\n", encoding="utf-8")
+            decision_report.write_text("decision: defer\n", encoding="utf-8")
+            observed_review.write_text("source: observed task run\n\nstatus: blocked\n", encoding="utf-8")
+            consumption_audit.write_text("status: blocked\n", encoding="utf-8")
+            consumption_aware_review.write_text(
+                "proposed_weights: weights/proposed-observed-consumption-aware.json\n\nstatus: blocked\n",
+                encoding="utf-8",
+            )
+            consumption_aware_cap.write_text("largest_clean_ratio: 0.000\n", encoding="utf-8")
+
+            target = suggest_next_target(
+                iteration_log,
+                adoption_index,
+                evidence_review,
+                cap_review,
+                decision_report,
+                observed_review,
+                consumption_audit,
+                consumption_aware_review,
+                consumption_aware_cap,
+            )
+            rendered = render_next_target(target)
+
+        self.assertIn("cost and optional-harm", target.title.lower())
+        self.assertIn("--require-unconsumed-for token --require-evidence-ref", rendered)
+        self.assertIn("--require-unconsumed-for missed_optional --require-evidence-ref", rendered)
 
     def test_calibration_preview_reports_regression_diff(self) -> None:
         outcome = OutcomeRecord(
