@@ -55,9 +55,9 @@ def suggest_next_target(
             ),
             suggested_commands=(
                 "python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md",
-                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for token",
-                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for minute",
-                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for missed_optional",
+                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for token --require-evidence-ref",
+                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for minute --require-evidence-ref",
+                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for missed_optional --require-evidence-ref",
                 "python -m reopt.regression --check",
             ),
         )
@@ -107,7 +107,7 @@ def suggest_next_target(
             ),
             suggested_commands=(
                 "python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md",
-                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for quality",
+                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for quality --require-evidence-ref",
                 "python -m reopt.outcome_consumption weights/proposed-observed-quality.json --write-report docs/outcome-consumption/proposed-observed-quality.md",
                 "python -m reopt.regression --check",
             ),

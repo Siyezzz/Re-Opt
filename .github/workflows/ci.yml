@@ -36,7 +36,7 @@ jobs:
 
       - name: Check observed outcome evidence freshness
         run: |
-          python -m reopt.outcome_intake --validate outcomes/next-outcome.json
+          python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-evidence-ref
           python -m reopt.observed_evidence --candidate outcomes/next-outcome.json --write-weights weights/proposed-observed-evidence.json --write-report docs/outcome-evidence/observed-next-outcome.md --provenance "commit 69f87f4 Add capped adoption decision; 31 tests passed; regression gate passed"
           git diff --exit-code outcomes/next-outcome.json weights/proposed-observed-evidence.json docs/outcome-evidence/observed-next-outcome.md
 

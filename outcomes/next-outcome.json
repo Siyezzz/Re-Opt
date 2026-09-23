@@ -2,6 +2,7 @@
   {
     "actual_minutes": 80,
     "actual_tokens": 10500,
+    "evidence_ref": "commit 69f87f4 Add capped adoption decision; 31 tests passed; regression gate passed",
     "graph_id": "coding-debug-seed",
     "missed_optional_harm": 0.0,
     "observed_quality": 0.95,

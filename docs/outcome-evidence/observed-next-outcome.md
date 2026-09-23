@@ -5,6 +5,7 @@ existing: outcomes/seed-outcomes.json
 proposed_weights: weights/proposed-observed-evidence.json
 source: observed task run
 provenance: commit 69f87f4 Add capped adoption decision; 31 tests passed; regression gate passed
+ledger: none
 
 # Outcome Intake Validation
 

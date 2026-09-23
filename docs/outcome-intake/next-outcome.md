@@ -19,9 +19,11 @@ Required fields:
 - actual_minutes
 - time_budget_minutes
 - missed_optional_harm
+- evidence_ref
 
 Required signals:
 
+- Each candidate record must include a non-placeholder evidence_ref.
 - At least one new outcome must have actual_tokens above token_budget, and that outcome must not already be consumed for token.
 - At least one new outcome must have actual_minutes above time_budget_minutes, and that outcome must not already be consumed for minute.
 - At least one new outcome must have missed_optional_harm above 0, and that outcome must not already be consumed for missed_optional.
@@ -33,6 +35,7 @@ Suggested JSON record:
   {
     "actual_minutes": 95,
     "actual_tokens": 13000,
+    "evidence_ref": "REPLACE_WITH_OBSERVED_RUN_POINTER",
     "graph_id": "coding-debug-seed",
     "missed_optional_harm": 0.2,
     "observed_quality": 0.85,
@@ -46,9 +49,9 @@ Suggested JSON record:
 
 Suggested commands:
 
-- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for token`
-- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for minute`
-- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for missed_optional`
+- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for token --require-evidence-ref`
+- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for minute --require-evidence-ref`
+- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for missed_optional --require-evidence-ref`
 - `python -m reopt.outcomes outcomes/next-outcome.json`
 - `python -m reopt.calibrate outcomes/next-outcome.json`
 - `python -m reopt.explain_adoption weights/proposed-seed.json`

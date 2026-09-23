@@ -21,6 +21,7 @@ class OutcomeRecord:
     actual_minutes: int
     time_budget_minutes: int
     missed_optional_harm: float = 0.0
+    evidence_ref: str = ""
 
 
 def load_outcomes(path: Path) -> tuple[OutcomeRecord, ...]:

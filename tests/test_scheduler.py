@@ -656,6 +656,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
                         actual_minutes=80,
                         time_budget_minutes=90,
                         missed_optional_harm=0.0,
+                        evidence_ref="commit abc123 with passing tests",
                     ),
                 ),
             )
@@ -700,6 +701,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
                         actual_minutes=80,
                         time_budget_minutes=90,
                         missed_optional_harm=0.0,
+                        evidence_ref="commit abc123 with passing tests",
                     ),
                 ),
             )
@@ -1009,6 +1011,7 @@ class HeuristicSchedulerTest(unittest.TestCase):
                         actual_minutes=80,
                         time_budget_minutes=90,
                         missed_optional_harm=0.0,
+                        evidence_ref="commit abc123 with passing tests",
                     ),
                 ),
             )
@@ -1026,6 +1029,57 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("provenance: commit abc123 with passing tests", report)
         self.assertIn("status: clean", report)
         self.assertNotIn("synthetic simulation", report)
+
+    def test_observed_evidence_review_requires_record_evidence_ref(self) -> None:
+        with TemporaryDirectory() as tmp:
+            existing_path = Path(tmp) / "existing.json"
+            candidate_path = Path(tmp) / "candidate.json"
+            weights_path = Path(tmp) / "proposed.json"
+            baseline_path = Path(tmp) / "baseline.json"
+            dump_outcomes(
+                existing_path,
+                (
+                    OutcomeRecord(
+                        graph_id="tight-research-seed",
+                        strategy="budget-pruning-v0",
+                        observed_quality=0.7,
+                        target_quality=0.8,
+                        actual_tokens=7600,
+                        token_budget=7000,
+                        actual_minutes=70,
+                        time_budget_minutes=65,
+                        missed_optional_harm=0.4,
+                    ),
+                ),
+            )
+            dump_outcomes(
+                candidate_path,
+                (
+                    OutcomeRecord(
+                        graph_id="coding-debug-seed",
+                        strategy="critical-path-a-star-v0",
+                        observed_quality=0.95,
+                        target_quality=0.8,
+                        actual_tokens=10500,
+                        token_budget=12000,
+                        actual_minutes=80,
+                        time_budget_minutes=90,
+                        missed_optional_harm=0.0,
+                    ),
+                ),
+            )
+            write_seed_snapshot(baseline_path)
+
+            report = review_observed_evidence(
+                candidate_path,
+                weights_path,
+                existing_path,
+                baseline_path,
+                provenance="commit abc123 with passing tests",
+            )
+
+        self.assertIn("status: blocked", report)
+        self.assertIn("evidence_ref must point to the observed run evidence", report)
 
     def test_outcome_consumption_blocks_reused_quality_signal(self) -> None:
         with TemporaryDirectory() as tmp:

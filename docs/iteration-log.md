@@ -1068,3 +1068,31 @@ making the required cost/optional signals explicit.
 
 Fill `outcomes/next-outcome.json` with a real observed run that satisfies those
 unconsumed non-quality signals, then rerun consumption-aware evidence review.
+
+## 2026-09-23 - Outcome Provenance Gate
+
+### Objective
+
+Prevent suggested or copied JSON records from being mistaken for observed
+evidence when the next target requires a real run.
+
+### Implementation
+
+Added an optional per-record `evidence_ref` field to `OutcomeRecord` and made
+observed evidence review require a non-placeholder evidence pointer for each
+candidate outcome. Outcome intake now renders `evidence_ref` as a required field
+and includes `--require-evidence-ref` in validation commands.
+
+### Observed Result
+
+The historical `outcomes/next-outcome.json` now carries the provenance that was
+already cited in the observed-evidence report, so existing reports remain
+reproducible. The same record still fails the new token/minute/missed-optional
+checks because it has no unconsumed cost or optional-harm signal, which keeps the
+next target honest instead of treating provenance as enough.
+
+### Next Refinement
+
+Fill `outcomes/next-outcome.json` with a real observed run that has both a
+non-placeholder `evidence_ref` and unconsumed token, minute, and missed-optional
+signals; then rerun consumption-aware evidence review.

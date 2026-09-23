@@ -39,8 +39,8 @@ python -m reopt.adopt weights/proposed-seed.json
 python -m reopt.adopt weights/proposed-seed.json --write-report adoption-reports/proposed-seed.md
 python -m reopt.explain_adoption weights/proposed-seed.json --write-report docs/adoption-analysis/proposed-seed.md
 python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md
-python -m reopt.outcome_intake --validate outcomes/next-outcome.json
-python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for quality
+python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-evidence-ref
+python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for quality --require-evidence-ref
 python -m reopt.observed_evidence --candidate outcomes/next-outcome.json --write-weights weights/proposed-observed-evidence.json --write-report docs/outcome-evidence/observed-next-outcome.md --provenance "commit 69f87f4 Add capped adoption decision; 31 tests passed; regression gate passed"
 python -m reopt.explain_adoption weights/proposed-observed-evidence.json --write-report docs/adoption-analysis/proposed-observed-evidence.md --write-smaller-weights weights/proposed-observed-quality.json
 python -m reopt.adopt weights/proposed-observed-evidence.json --write-report adoption-reports/proposed-observed-evidence.md

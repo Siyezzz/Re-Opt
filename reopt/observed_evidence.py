@@ -30,7 +30,11 @@ def review_observed_evidence(
 ) -> str:
     existing = load_outcomes(existing_path)
     candidate = load_outcomes(candidate_path)
-    ok, failures = validate_outcome_intake(candidate_path, existing_path)
+    ok, failures = validate_outcome_intake(
+        candidate_path,
+        existing_path,
+        require_evidence_ref=True,
+    )
     combined = existing + candidate
     if ledger_path:
         consumed_by_field = {

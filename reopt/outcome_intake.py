@@ -41,12 +41,14 @@ def suggest_outcome_intake(
     )
     validation_commands = tuple(
         "python -m reopt.outcome_intake --validate "
-        f"outcomes/next-outcome.json --require-unconsumed-for {field}"
+        f"outcomes/next-outcome.json --require-unconsumed-for {field} "
+        "--require-evidence-ref"
         for field in required_fields_for_signals
     )
     if not validation_commands:
         validation_commands = (
-            "python -m reopt.outcome_intake --validate outcomes/next-outcome.json",
+            "python -m reopt.outcome_intake --validate "
+            "outcomes/next-outcome.json --require-evidence-ref",
         )
     return OutcomeIntakeRequest(
         title=(
@@ -106,6 +108,7 @@ def render_outcome_intake(request: OutcomeIntakeRequest) -> str:
     for field in request.required_fields:
         lines.append(f"- {field}")
     lines.extend(["", "Required signals:", ""])
+    lines.append("- Each candidate record must include a non-placeholder evidence_ref.")
     if request.required_signals:
         for signal in request.required_signals:
             lines.append(f"- {signal}")
@@ -134,6 +137,7 @@ def validate_outcome_intake(
     existing_path: Path = Path("outcomes/seed-outcomes.json"),
     require_unconsumed_for: str | None = None,
     ledger_path: Path = DEFAULT_LEDGER,
+    require_evidence_ref: bool = False,
 ) -> tuple[bool, tuple[str, ...]]:
     existing = {_outcome_key(outcome) for outcome in load_outcomes(existing_path)}
     candidate = load_outcomes(candidate_path)
@@ -156,6 +160,8 @@ def validate_outcome_intake(
             failures.append(f"{prefix}: observed_quality must be observed and in (0, 1]")
         if outcome.missed_optional_harm < 0:
             failures.append(f"{prefix}: missed_optional_harm cannot be negative")
+        if require_evidence_ref and _is_placeholder_evidence_ref(outcome.evidence_ref):
+            failures.append(f"{prefix}: evidence_ref must point to the observed run evidence")
     if require_unconsumed_for:
         entries = load_consumption_ledger(ledger_path)
         consumed = consumed_outcomes(entries, require_unconsumed_for)
@@ -197,6 +203,7 @@ def _suggest_record(
             actual_minutes=95 if "minute" in required_fields else 0,
             time_budget_minutes=90,
             missed_optional_harm=0.2 if "missed_optional" in required_fields else 0.0,
+            evidence_ref="REPLACE_WITH_OBSERVED_RUN_POINTER",
         )
     return OutcomeRecord(
         graph_id="research-synthesis-seed",
@@ -208,6 +215,7 @@ def _suggest_record(
         actual_minutes=130 if "minute" in required_fields else 0,
         time_budget_minutes=120,
         missed_optional_harm=0.2 if "missed_optional" in required_fields else 0.0,
+        evidence_ref="REPLACE_WITH_OBSERVED_RUN_POINTER",
     )
 
 
@@ -230,6 +238,11 @@ def _supports_required_field(outcome: OutcomeRecord, field: str) -> bool:
     if field == "missed_optional":
         return outcome.missed_optional_harm > 0
     return False
+
+
+def _is_placeholder_evidence_ref(value: str) -> bool:
+    stripped = value.strip()
+    return not stripped or stripped == "REPLACE_WITH_OBSERVED_RUN_POINTER"
 
 
 def _required_unconsumed_fields(next_target: str) -> tuple[str, ...]:
@@ -293,6 +306,11 @@ def main() -> None:
         default=DEFAULT_LEDGER,
         help="Outcome-consumption ledger JSON path.",
     )
+    parser.add_argument(
+        "--require-evidence-ref",
+        action="store_true",
+        help="Require each candidate record to include a non-placeholder evidence_ref.",
+    )
     args = parser.parse_args()
     if args.validate:
         ok, failures = validate_outcome_intake(
@@ -300,6 +318,7 @@ def main() -> None:
             args.outcomes,
             args.require_unconsumed_for,
             args.ledger,
+            args.require_evidence_ref,
         )
         print(render_validation_report(ok, failures))
         raise SystemExit(0 if ok else 1)
