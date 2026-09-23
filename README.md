@@ -47,6 +47,9 @@ python -m reopt.adopt weights/proposed-observed-evidence.json --write-report ado
 python -m reopt.adopt weights/proposed-observed-quality.json --write-report adoption-reports/proposed-observed-quality.md
 python -m reopt.increment_cap weights/proposed-observed-evidence.json --write-weights weights/proposed-capped-observed-evidence.json --write-report docs/weight-caps/observed-evidence.md
 python -m reopt.outcome_consumption weights/proposed-observed-quality.json --write-report docs/outcome-consumption/proposed-observed-quality.md
+python -m reopt.observed_evidence --candidate outcomes/next-outcome.json --ledger docs/outcome-consumption/ledger.json --write-weights weights/proposed-observed-consumption-aware.json --write-report docs/outcome-evidence/observed-consumption-aware.md --provenance "commit 69f87f4 Add capped adoption decision; 31 tests passed; regression gate passed"
+python -m reopt.explain_adoption weights/proposed-observed-consumption-aware.json --write-report docs/adoption-analysis/proposed-consumption-aware.md
+python -m reopt.increment_cap weights/proposed-observed-consumption-aware.json --write-weights weights/proposed-capped-consumption-aware.json --write-report docs/weight-caps/consumption-aware.md
 python -m reopt.evidence_review --write-simulated --candidate outcomes/simulated-next-outcome.json --write-weights weights/proposed-expanded-evidence.json --write-report docs/outcome-evidence/simulated-next-outcome.md
 python -m reopt.increment_cap weights/proposed-expanded-evidence.json --write-weights weights/proposed-capped-expanded-evidence.json --write-report docs/weight-caps/expanded-evidence.md
 python -m reopt.adoption_decision --write-report docs/adoption-decisions/capped-expanded-evidence.md
@@ -68,6 +71,7 @@ The current implementation is intentionally small:
 - `reopt.regression` compares current seed output against the committed baseline
 - `reopt.outcomes` proposes utility-weight updates from observed outcomes
 - `reopt.calibrate` previews proposed weights against the regression baseline
+- `reopt.calibrate --ledger` excludes already-consumed field signals from calibration
 - `reopt.adopt` produces a review checklist for proposed utility weights
 - `reopt.explain_adoption` explains blocked weight adoption and proposes smaller experiments
 - `reopt.outcome_intake` generates the next fresh outcome-evidence request

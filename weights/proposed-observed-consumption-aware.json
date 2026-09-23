@@ -1,0 +1,9 @@
+{
+  "minute": 0.01038,
+  "minute_overrun": 0.08,
+  "missed_optional": 0.35,
+  "quality": 1.05,
+  "risk": 0.15,
+  "token": 0.0001043,
+  "token_overrun_multiplier": 4.0
+}

@@ -1009,3 +1009,62 @@ unconsumed quality-gap record passes.
 Fill `outcomes/next-outcome.json` with an actual observed task run that provides
 an unconsumed quality signal, then rerun observed evidence review and
 consumption audit.
+
+## 2026-09-23 - Consumption-Aware Calibration
+
+### Objective
+
+Avoid manufacturing a new observed quality gap when the current evidence only
+shows that the old quality signal was already consumed.
+
+### Implementation
+
+Added consumption-aware calibration:
+
+```bash
+python -m reopt.observed_evidence \
+  --candidate outcomes/next-outcome.json \
+  --ledger docs/outcome-consumption/ledger.json \
+  --write-weights weights/proposed-observed-consumption-aware.json \
+  --write-report docs/outcome-evidence/observed-consumption-aware.md
+```
+
+The ledger-aware path excludes consumed field signals before proposing utility
+weights.
+
+### Observed Result
+
+The consumed tight-research quality gap is excluded, so `quality` no longer
+increases. The remaining token, minute, and missed-optional increments are still
+blocked, and no single changed field has non-negative utility deltas. The largest
+clean uniform cap is `0.000`, so there is no meaningful reversible increment to
+adopt from the current evidence.
+
+### Next Refinement
+
+Collect fresh unconsumed token, minute, and missed-optional evidence before
+changing non-quality cost weights.
+
+## 2026-09-23 - Cost Evidence Intake
+
+### Objective
+
+Update the outcome intake request to match the new target: unconsumed
+non-quality cost and optional-harm signals.
+
+### Implementation
+
+`reopt.outcome_intake` now reads the next-target suggested commands and generates
+field-specific required signals for `token`, `minute`, and `missed_optional`.
+
+### Observed Result
+
+The generated intake now requests an outcome with token overrun, time overrun,
+and missed optional harm, each checked with `--require-unconsumed-for`. The
+suggested JSON record remains validation-ready for non-target fields while
+making the required cost/optional signals explicit.
+
+### Next Refinement
+
+Fill `outcomes/next-outcome.json` with a real observed run that satisfies those
+unconsumed non-quality signals, then rerun consumption-aware evidence review.

@@ -23,6 +23,8 @@ def suggest_next_target(
     decision_report: Path = Path("docs/adoption-decisions/capped-expanded-evidence.md"),
     observed_review: Path = Path("docs/outcome-evidence/observed-next-outcome.md"),
     consumption_audit: Path = Path("docs/outcome-consumption/proposed-observed-quality.md"),
+    consumption_aware_review: Path = Path("docs/outcome-evidence/observed-consumption-aware.md"),
+    consumption_aware_cap: Path = Path("docs/weight-caps/consumption-aware.md"),
 ) -> NextTarget:
     log_text = iteration_log.read_text(encoding="utf-8")
     index_text = adoption_index.read_text(encoding="utf-8")
@@ -30,6 +32,61 @@ def suggest_next_target(
     blocked_reports = _reports_by_status(index_text, "blocked")
     clean_reports = _reports_by_status(index_text, "clean")
     adopted_reports = _reports_by_status(index_text, "adopted")
+
+    if (
+        blocked_reports
+        and _expects_consumption_aware_review(latest_refinement)
+        and _consumption_aware_cap_zero(consumption_aware_cap)
+    ):
+        blocked_report_paths = tuple(report for report, _weights in blocked_reports)
+        return NextTarget(
+            title="Collect unconsumed cost and optional-harm evidence",
+            rationale=(
+                "Consumption-aware calibration removes the already-consumed quality "
+                "signal, and the remaining token, minute, and missed-optional "
+                "increments have no clean cap. The next optimization should gather "
+                "fresh unconsumed evidence for those non-quality signals before "
+                "changing cost weights."
+            ),
+            evidence=(
+                f"latest_next_refinement={latest_refinement}",
+                f"blocked_reports={', '.join(blocked_report_paths)}",
+                f"consumption_aware_cap={consumption_aware_cap.as_posix()}",
+            ),
+            suggested_commands=(
+                "python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md",
+                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for token",
+                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for minute",
+                "python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for missed_optional",
+                "python -m reopt.regression --check",
+            ),
+        )
+
+    if (
+        blocked_reports
+        and _expects_consumption_aware_review(latest_refinement)
+        and _consumption_aware_review_blocked(consumption_aware_review)
+    ):
+        blocked_report_paths = tuple(report for report, _weights in blocked_reports)
+        return NextTarget(
+            title="Split consumption-aware blocked cost increments",
+            rationale=(
+                "Consumption-aware calibration excludes the already-used quality "
+                "signal, but the remaining token, minute, and missed-optional "
+                "increments are still blocked. The next optimization should split "
+                "or cap those remaining non-quality increments."
+            ),
+            evidence=(
+                f"latest_next_refinement={latest_refinement}",
+                f"blocked_reports={', '.join(blocked_report_paths)}",
+                f"consumption_aware_review={consumption_aware_review.as_posix()}",
+            ),
+            suggested_commands=(
+                "python -m reopt.explain_adoption weights/proposed-observed-consumption-aware.json",
+                "python -m reopt.increment_cap weights/proposed-observed-consumption-aware.json --write-weights weights/proposed-capped-consumption-aware.json --write-report docs/weight-caps/consumption-aware.md",
+                "python -m reopt.regression --check",
+            ),
+        )
 
     if blocked_reports and clean_reports and _consumption_audit_blocked(consumption_audit):
         clean_report_paths = tuple(report for report, _weights in clean_reports)
@@ -310,6 +367,30 @@ def _consumption_audit_blocked(path: Path) -> bool:
     return "status: blocked" in text
 
 
+def _consumption_aware_review_blocked(path: Path) -> bool:
+    if not path.exists():
+        return False
+    text = path.read_text(encoding="utf-8")
+    return (
+        "proposed_weights: weights/proposed-observed-consumption-aware.json" in text
+        and "status: blocked" in text
+    )
+
+
+def _consumption_aware_cap_zero(path: Path) -> bool:
+    if not path.exists():
+        return False
+    text = path.read_text(encoding="utf-8")
+    return "largest_clean_ratio: 0.000" in text
+
+
+def _expects_consumption_aware_review(latest_refinement: str) -> bool:
+    return (
+        "consumed signals are excluded" in latest_refinement
+        or "Fill `outcomes/next-outcome.json`" in latest_refinement
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Suggest the next Re-Opt refinement target.")
     parser.add_argument(
@@ -354,6 +435,18 @@ def main() -> None:
         default=Path("docs/outcome-consumption/proposed-observed-quality.md"),
         help="Outcome-consumption audit Markdown path.",
     )
+    parser.add_argument(
+        "--consumption-aware-review",
+        type=Path,
+        default=Path("docs/outcome-evidence/observed-consumption-aware.md"),
+        help="Consumption-aware observed evidence review Markdown path.",
+    )
+    parser.add_argument(
+        "--consumption-aware-cap",
+        type=Path,
+        default=Path("docs/weight-caps/consumption-aware.md"),
+        help="Consumption-aware cap review Markdown path.",
+    )
     parser.add_argument("--write", type=Path, help="Write the suggestion to a Markdown file.")
     args = parser.parse_args()
     rendered = render_next_target(
@@ -365,6 +458,8 @@ def main() -> None:
             args.decision_report,
             args.observed_review,
             args.consumption_audit,
+            args.consumption_aware_review,
+            args.consumption_aware_cap,
         )
     )
     if args.write:

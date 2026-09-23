@@ -1,0 +1,80 @@
+# Observed Outcome Evidence Review
+
+candidate: outcomes/next-outcome.json
+existing: outcomes/seed-outcomes.json
+proposed_weights: weights/proposed-observed-consumption-aware.json
+source: observed task run
+provenance: commit 69f87f4 Add capped adoption decision; 31 tests passed; regression gate passed
+ledger: docs/outcome-consumption/ledger.json
+
+# Outcome Intake Validation
+
+status: clean
+
+# Utility Weight Calibration
+
+outcomes: 2
+
+| Weight | Current | Proposed | Delta |
+| --- | ---: | ---: | ---: |
+| quality | 1.05 | 1.05 | +0.000000 |
+| token | 0.0001 | 0.0001043 | +0.000004 |
+| minute | 0.01 | 0.01038 | +0.000380 |
+| risk | 0.15 | 0.15 | +0.000000 |
+| missed_optional | 0.25 | 0.35 | +0.100000 |
+| token_overrun_multiplier | 4.0 | 4.0 | +0.000000 |
+| minute_overrun | 0.08 | 0.08 | +0.000000 |
+
+Outcome signals:
+
+- tight-research-seed/budget-pruning-v0: quality_gap=0.100, token_overrun=600, time_overrun=5, missed_optional_harm=0.400
+- coding-debug-seed/critical-path-a-star-v0: quality_gap=0.000, token_overrun=0, time_overrun=0, missed_optional_harm=0.000
+
+Consumed signals excluded:
+
+- quality:
+  - tight-research-seed/budget-pruning-v0: tokens=7600/7000, minutes=70/65, quality=0.7/0.8
+
+# Utility Weight Adoption Checklist
+
+weights: weights/proposed-observed-consumption-aware.json
+baseline: benchmark-results/seed-baseline.json
+status: blocked
+
+Blocking regression signals:
+
+- Select a scheduler for: Answer a research question under a tight budget: utility dropped by -0.095
+- Select a scheduler for: Debug a failing feature and verify the fix: utility dropped by -0.073
+- Select a scheduler for: Research a broad question and synthesize a position: utility dropped by -0.087
+
+Required adoption steps:
+
+- Review the calibration report and regression preview.
+- Confirm strategy changes, utility drops, and warning changes are intended.
+- Commit the proposed weights only with an updated baseline snapshot.
+- Record the adoption rationale in the iteration log and SEA.
+
+# Optimization Export Diff
+
+## Select a scheduler for: Answer a research question under a tight budget
+
+- strategy: unchanged
+- utility_delta: -0.095
+- warning_delta: +0
+
+## Select a scheduler for: Debug a failing feature and verify the fix
+
+- strategy: unchanged
+- utility_delta: -0.073
+- warning_delta: +0
+
+## Select a scheduler for: Research a broad question and synthesize a position
+
+- strategy: unchanged
+- utility_delta: -0.087
+- warning_delta: +0
+
+Interpretation:
+
+- The candidate outcome is validation-clean and can be used as observed calibration evidence.
+- Adoption still depends on the regression checklist; observed evidence is not automatic approval.

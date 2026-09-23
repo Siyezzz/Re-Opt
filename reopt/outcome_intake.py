@@ -34,28 +34,31 @@ def suggest_outcome_intake(
     outcomes = load_outcomes(outcomes_path)
     next_target = next_target_path.read_text(encoding="utf-8")
     avoid_reusing = tuple(_outcome_key(outcome) for outcome in outcomes)
-    require_unconsumed_quality = "unconsumed outcome evidence" in next_target
-    suggested = _suggest_record(outcomes, require_quality_gap=require_unconsumed_quality)
-    required_signals = (
-        (
-            "At least one new outcome must have observed_quality below target_quality, "
-            "and that outcome must not already be consumed for quality."
-        ),
-    ) if require_unconsumed_quality else ()
-    validation_command = "python -m reopt.outcome_intake --validate outcomes/next-outcome.json"
-    if require_unconsumed_quality:
-        validation_command += " --require-unconsumed-for quality"
+    required_fields_for_signals = _required_unconsumed_fields(next_target)
+    suggested = _suggest_record(outcomes, required_fields_for_signals)
+    required_signals = tuple(
+        _required_signal_text(field) for field in required_fields_for_signals
+    )
+    validation_commands = tuple(
+        "python -m reopt.outcome_intake --validate "
+        f"outcomes/next-outcome.json --require-unconsumed-for {field}"
+        for field in required_fields_for_signals
+    )
+    if not validation_commands:
+        validation_commands = (
+            "python -m reopt.outcome_intake --validate outcomes/next-outcome.json",
+        )
     return OutcomeIntakeRequest(
         title=(
-            "Collect unconsumed quality evidence"
-            if require_unconsumed_quality
+            f"Collect unconsumed {', '.join(required_fields_for_signals)} evidence"
+            if required_fields_for_signals
             else "Collect a new outcome before more weight changes"
         ),
         rationale=(
-            "The next target asks for a quality signal that has not already been "
-            "used to justify a quality-weight adoption. A fresh outcome should "
-            "show an observed quality gap before the quality weight is raised again."
-            if require_unconsumed_quality
+            "The next target asks for field-specific signals that have not already "
+            "been used to justify weight adoptions. A fresh outcome should satisfy "
+            "the listed unconsumed signal checks before any related weight is raised."
+            if required_fields_for_signals
             else (
                 "The next target asks for evidence before changing the remaining blocked "
                 "weight increments. A new outcome should come from a different task shape "
@@ -68,7 +71,7 @@ def suggest_outcome_intake(
         required_signals=required_signals,
         suggested_record=suggested,
         suggested_commands=(
-            validation_command,
+            *validation_commands,
             "python -m reopt.outcomes outcomes/next-outcome.json",
             "python -m reopt.calibrate outcomes/next-outcome.json",
             "python -m reopt.explain_adoption weights/proposed-seed.json",
@@ -180,31 +183,31 @@ def render_validation_report(ok: bool, failures: tuple[str, ...]) -> str:
 
 def _suggest_record(
     outcomes: tuple[OutcomeRecord, ...],
-    require_quality_gap: bool = False,
+    required_fields: tuple[str, ...] = (),
 ) -> OutcomeRecord:
     used_graphs = {outcome.graph_id for outcome in outcomes}
     if "coding-debug-seed" not in used_graphs:
         return OutcomeRecord(
             graph_id="coding-debug-seed",
             strategy="critical-path-a-star-v0",
-            observed_quality=0.65 if require_quality_gap else 0.0,
+            observed_quality=0.65 if "quality" in required_fields else 0.85,
             target_quality=0.8,
-            actual_tokens=0,
+            actual_tokens=13000 if "token" in required_fields else 0,
             token_budget=12000,
-            actual_minutes=0,
+            actual_minutes=95 if "minute" in required_fields else 0,
             time_budget_minutes=90,
-            missed_optional_harm=0.0,
+            missed_optional_harm=0.2 if "missed_optional" in required_fields else 0.0,
         )
     return OutcomeRecord(
         graph_id="research-synthesis-seed",
         strategy="critical-path-a-star-v0",
-        observed_quality=0.65 if require_quality_gap else 0.0,
+        observed_quality=0.65 if "quality" in required_fields else 0.85,
         target_quality=0.8,
-        actual_tokens=0,
+        actual_tokens=18000 if "token" in required_fields else 0,
         token_budget=16000,
-        actual_minutes=0,
+        actual_minutes=130 if "minute" in required_fields else 0,
         time_budget_minutes=120,
-        missed_optional_harm=0.0,
+        missed_optional_harm=0.2 if "missed_optional" in required_fields else 0.0,
     )
 
 
@@ -227,6 +230,40 @@ def _supports_required_field(outcome: OutcomeRecord, field: str) -> bool:
     if field == "missed_optional":
         return outcome.missed_optional_harm > 0
     return False
+
+
+def _required_unconsumed_fields(next_target: str) -> tuple[str, ...]:
+    fields = []
+    for field in ("quality", "token", "minute", "missed_optional"):
+        if f"--require-unconsumed-for {field}" in next_target:
+            fields.append(field)
+    if not fields and "unconsumed outcome evidence" in next_target:
+        fields.append("quality")
+    return tuple(fields)
+
+
+def _required_signal_text(field: str) -> str:
+    if field == "quality":
+        return (
+            "At least one new outcome must have observed_quality below target_quality, "
+            "and that outcome must not already be consumed for quality."
+        )
+    if field == "token":
+        return (
+            "At least one new outcome must have actual_tokens above token_budget, "
+            "and that outcome must not already be consumed for token."
+        )
+    if field == "minute":
+        return (
+            "At least one new outcome must have actual_minutes above time_budget_minutes, "
+            "and that outcome must not already be consumed for minute."
+        )
+    if field == "missed_optional":
+        return (
+            "At least one new outcome must have missed_optional_harm above 0, "
+            "and that outcome must not already be consumed for missed_optional."
+        )
+    raise ValueError(f"Unsupported required signal field: {field}")
 
 
 def main() -> None:

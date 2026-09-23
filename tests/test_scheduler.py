@@ -45,11 +45,13 @@ from reopt.adoption_decision import decide_adoption, render_decision
 from reopt.outcomes import (
     OutcomeRecord,
     calibration_report,
+    consumption_adjusted_report,
     dump_outcomes,
     dump_utility_weights,
     load_outcomes,
     load_utility_weights,
     propose_utility_weights,
+    propose_utility_weights_with_consumption,
 )
 
 
@@ -226,6 +228,52 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertEqual(loaded, (outcome,))
         self.assertIn("# Utility Weight Calibration", report)
         self.assertIn("tight-research-seed/budget-pruning-v0", report)
+
+    def test_consumption_aware_calibration_excludes_consumed_quality_signal(self) -> None:
+        base = UtilityWeights()
+        consumed = OutcomeRecord(
+            graph_id="tight-research-seed",
+            strategy="budget-pruning-v0",
+            observed_quality=0.7,
+            target_quality=0.8,
+            actual_tokens=7600,
+            token_budget=7000,
+            actual_minutes=70,
+            time_budget_minutes=65,
+            missed_optional_harm=0.4,
+        )
+        fresh = OutcomeRecord(
+            graph_id="coding-debug-seed",
+            strategy="critical-path-a-star-v0",
+            observed_quality=0.95,
+            target_quality=0.8,
+            actual_tokens=10500,
+            token_budget=12000,
+            actual_minutes=80,
+            time_budget_minutes=90,
+            missed_optional_harm=0.0,
+        )
+        consumed_key = (
+            "tight-research-seed/budget-pruning-v0: "
+            "tokens=7600/7000, minutes=70/65, quality=0.7/0.8"
+        )
+
+        proposed = propose_utility_weights_with_consumption(
+            base,
+            (consumed, fresh),
+            {"quality": {consumed_key}},
+        )
+        report = consumption_adjusted_report(
+            base,
+            proposed,
+            (consumed, fresh),
+            {"quality": {consumed_key}},
+        )
+
+        self.assertEqual(proposed.quality, base.quality)
+        self.assertGreater(proposed.token, base.token)
+        self.assertIn("Consumed signals excluded:", report)
+        self.assertIn(consumed_key, report)
 
     def test_utility_weights_round_trip(self) -> None:
         weights = UtilityWeights(quality=1.05, missed_optional=0.45)
@@ -623,6 +671,65 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertLess(request.suggested_record.observed_quality, request.suggested_record.target_quality)
         self.assertIn("Required signals:", rendered)
         self.assertIn("--require-unconsumed-for quality", rendered)
+
+    def test_outcome_intake_requests_unconsumed_cost_and_optional_signals(self) -> None:
+        with TemporaryDirectory() as tmp:
+            outcomes_path = Path(tmp) / "outcomes.json"
+            next_target_path = Path(tmp) / "next-target.md"
+            dump_outcomes(
+                outcomes_path,
+                (
+                    OutcomeRecord(
+                        graph_id="tight-research-seed",
+                        strategy="budget-pruning-v0",
+                        observed_quality=0.7,
+                        target_quality=0.8,
+                        actual_tokens=7600,
+                        token_budget=7000,
+                        actual_minutes=70,
+                        time_budget_minutes=65,
+                        missed_optional_harm=0.4,
+                    ),
+                    OutcomeRecord(
+                        graph_id="coding-debug-seed",
+                        strategy="critical-path-a-star-v0",
+                        observed_quality=0.95,
+                        target_quality=0.8,
+                        actual_tokens=10500,
+                        token_budget=12000,
+                        actual_minutes=80,
+                        time_budget_minutes=90,
+                        missed_optional_harm=0.0,
+                    ),
+                ),
+            )
+            next_target_path.write_text(
+                "\n".join(
+                    [
+                        "# Next Re-Opt Target",
+                        "",
+                        "title: Collect unconsumed cost and optional-harm evidence",
+                        "",
+                        "Suggested commands:",
+                        "",
+                        "- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for token`",
+                        "- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for minute`",
+                        "- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for missed_optional`",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            request = suggest_outcome_intake(outcomes_path, next_target_path)
+            rendered = render_outcome_intake(request)
+
+        self.assertIn("token, minute, missed_optional", request.title)
+        self.assertGreater(request.suggested_record.actual_tokens, request.suggested_record.token_budget)
+        self.assertGreater(request.suggested_record.actual_minutes, request.suggested_record.time_budget_minutes)
+        self.assertGreater(request.suggested_record.missed_optional_harm, 0)
+        self.assertIn("--require-unconsumed-for token", rendered)
+        self.assertIn("--require-unconsumed-for minute", rendered)
+        self.assertIn("--require-unconsumed-for missed_optional", rendered)
 
     def test_outcome_intake_validation_blocks_placeholders_and_reuse(self) -> None:
         with TemporaryDirectory() as tmp:
