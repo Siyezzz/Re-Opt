@@ -261,9 +261,21 @@ def _capture_command(outcome: OutcomeRecord) -> str:
         f"--time-budget-minutes {outcome.time_budget_minutes} "
         f"--missed-optional-harm {outcome.missed_optional_harm} "
         "--evidence-ref OBSERVED_RUN_POINTER "
+        f"{_capture_signal_flags(outcome)}"
         "--write outcomes/next-outcome.json "
         "--write-report docs/outcome-evidence/observed-run-capture.md"
     )
+
+
+def _capture_signal_flags(outcome: OutcomeRecord) -> str:
+    flags = []
+    if outcome.actual_tokens > outcome.token_budget:
+        flags.append("--require-signal token")
+    if outcome.actual_minutes > outcome.time_budget_minutes:
+        flags.append("--require-signal minute")
+    if outcome.missed_optional_harm > 0:
+        flags.append("--require-signal missed_optional")
+    return " ".join(flags) + (" " if flags else "")
 
 
 def _required_unconsumed_fields(next_target: str) -> tuple[str, ...]:

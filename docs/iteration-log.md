@@ -1122,3 +1122,28 @@ shape. The command can also write a capture report beside the outcome record.
 Run `reopt.observed_run` with actual Codex goal counters from a real task turn,
 then validate the resulting `outcomes/next-outcome.json` against token, minute,
 missed-optional, and evidence-ref requirements.
+
+## 2026-09-24 - Capture-Time Signal Checks
+
+### Objective
+
+Make `reopt.observed_run` fail fast when a captured run does not satisfy the
+next target's required token, minute, or missed-optional signals.
+
+### Implementation
+
+Added `--require-signal token|minute|missed_optional` to `reopt.observed_run`.
+The generated intake command now includes all three required signals for the
+current cost/optional evidence target.
+
+### Observed Result
+
+A capture with token, minute, and missed-optional overrun passes. A capture with
+only token overrun now exits before writing an outcome and reports the missing
+minute and missed-optional signals.
+
+### Next Refinement
+
+Run `reopt.observed_run` with actual before/after goal counters and the required
+signal flags, then use the resulting outcome to rerun consumption-aware evidence
+review.

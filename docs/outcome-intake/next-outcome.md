@@ -49,7 +49,7 @@ Suggested JSON record:
 
 Suggested commands:
 
-- `python -m reopt.observed_run --graph-id coding-debug-seed --strategy critical-path-a-star-v0 --observed-quality 0.85 --target-quality 0.8 --tokens-before TOKENS_BEFORE --tokens-after TOKENS_AFTER --token-budget 12000 --minutes-before MINUTES_BEFORE --minutes-after MINUTES_AFTER --time-budget-minutes 90 --missed-optional-harm 0.2 --evidence-ref OBSERVED_RUN_POINTER --write outcomes/next-outcome.json --write-report docs/outcome-evidence/observed-run-capture.md`
+- `python -m reopt.observed_run --graph-id coding-debug-seed --strategy critical-path-a-star-v0 --observed-quality 0.85 --target-quality 0.8 --tokens-before TOKENS_BEFORE --tokens-after TOKENS_AFTER --token-budget 12000 --minutes-before MINUTES_BEFORE --minutes-after MINUTES_AFTER --time-budget-minutes 90 --missed-optional-harm 0.2 --evidence-ref OBSERVED_RUN_POINTER --require-signal token --require-signal minute --require-signal missed_optional --write outcomes/next-outcome.json --write-report docs/outcome-evidence/observed-run-capture.md`
 - `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for token --require-evidence-ref`
 - `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for minute --require-evidence-ref`
 - `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for missed_optional --require-evidence-ref`

@@ -42,6 +42,7 @@ from reopt.observed_evidence import review_observed_evidence
 from reopt.observed_run import (
     ObservedRunCounters,
     outcome_from_counters,
+    required_signal_failures,
     render_capture_report,
 )
 from reopt.outcome_consumption import audit_consumption, render_consumption_audit
@@ -266,6 +267,33 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertEqual(outcome.evidence_ref, "codex goal counters 100 -> 13100")
         self.assertIn("tokens: 100 -> 13100", report)
         self.assertIn("missed_optional_harm: 0.2", report)
+
+    def test_observed_run_capture_checks_required_signals(self) -> None:
+        outcome = outcome_from_counters(
+            graph_id="coding-debug-seed",
+            strategy="critical-path-a-star-v0",
+            observed_quality=0.85,
+            target_quality=0.8,
+            token_budget=12000,
+            time_budget_minutes=90,
+            missed_optional_harm=0.0,
+            evidence_ref="codex goal counters",
+            counters=ObservedRunCounters(
+                tokens_before=100,
+                tokens_after=13100,
+                minutes_before=20,
+                minutes_after=80,
+            ),
+        )
+
+        failures = required_signal_failures(
+            outcome,
+            ("token", "minute", "missed_optional"),
+        )
+
+        self.assertNotIn("token signal requires actual_tokens above token_budget", failures)
+        self.assertIn("minute signal requires actual_minutes above time_budget_minutes", failures)
+        self.assertIn("missed_optional signal requires missed_optional_harm above 0", failures)
 
     def test_consumption_aware_calibration_excludes_consumed_quality_signal(self) -> None:
         base = UtilityWeights()
@@ -771,6 +799,9 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertIn("--require-unconsumed-for minute", rendered)
         self.assertIn("--require-unconsumed-for missed_optional", rendered)
         self.assertIn("python -m reopt.observed_run", rendered)
+        self.assertIn("--require-signal token", rendered)
+        self.assertIn("--require-signal minute", rendered)
+        self.assertIn("--require-signal missed_optional", rendered)
 
     def test_outcome_intake_validation_blocks_placeholders_and_reuse(self) -> None:
         with TemporaryDirectory() as tmp:

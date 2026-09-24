@@ -39,7 +39,7 @@ python -m reopt.adopt weights/proposed-seed.json
 python -m reopt.adopt weights/proposed-seed.json --write-report adoption-reports/proposed-seed.md
 python -m reopt.explain_adoption weights/proposed-seed.json --write-report docs/adoption-analysis/proposed-seed.md
 python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md
-python -m reopt.observed_run --graph-id coding-debug-seed --strategy critical-path-a-star-v0 --observed-quality 0.85 --target-quality 0.8 --tokens-before TOKENS_BEFORE --tokens-after TOKENS_AFTER --token-budget 12000 --minutes-before MINUTES_BEFORE --minutes-after MINUTES_AFTER --time-budget-minutes 90 --missed-optional-harm 0.2 --evidence-ref OBSERVED_RUN_POINTER --write outcomes/next-outcome.json --write-report docs/outcome-evidence/observed-run-capture.md
+python -m reopt.observed_run --graph-id coding-debug-seed --strategy critical-path-a-star-v0 --observed-quality 0.85 --target-quality 0.8 --tokens-before TOKENS_BEFORE --tokens-after TOKENS_AFTER --token-budget 12000 --minutes-before MINUTES_BEFORE --minutes-after MINUTES_AFTER --time-budget-minutes 90 --missed-optional-harm 0.2 --evidence-ref OBSERVED_RUN_POINTER --require-signal token --require-signal minute --require-signal missed_optional --write outcomes/next-outcome.json --write-report docs/outcome-evidence/observed-run-capture.md
 python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-evidence-ref
 python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for quality --require-evidence-ref
 python -m reopt.observed_evidence --candidate outcomes/next-outcome.json --write-weights weights/proposed-observed-evidence.json --write-report docs/outcome-evidence/observed-next-outcome.md --provenance "commit 69f87f4 Add capped adoption decision; 31 tests passed; regression gate passed"
@@ -77,7 +77,7 @@ The current implementation is intentionally small:
 - `reopt.explain_adoption` explains blocked weight adoption and proposes smaller experiments
 - `reopt.outcome_intake` generates the next fresh outcome-evidence request
 - `reopt.outcome_intake --require-unconsumed-for` validates that a filled outcome supplies a new field-specific signal
-- `reopt.observed_run` captures an observed run from before/after token and minute counters
+- `reopt.observed_run` captures an observed run from before/after token and minute counters, with optional required-signal checks
 - `reopt.observed_evidence` reviews fresh observed outcome evidence before adoption
 - `reopt.outcome_consumption` blocks repeated use of already-consumed outcome signals
 - `reopt.evidence_review` probes expanded outcome evidence before adoption

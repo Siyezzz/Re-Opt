@@ -6,7 +6,7 @@ rationale: Consumption-aware calibration removes the already-consumed quality si
 
 Evidence:
 
-- latest_next_refinement=Run `reopt.observed_run` with actual Codex goal counters from a real task turn, then validate the resulting `outcomes/next-outcome.json` against token, minute, missed-optional, and evidence-ref requirements.
+- latest_next_refinement=Run `reopt.observed_run` with actual before/after goal counters and the required signal flags, then use the resulting outcome to rerun consumption-aware evidence review.
 - blocked_reports=adoption-reports/proposed-observed-consumption-aware.md, adoption-reports/proposed-observed-evidence.md, adoption-reports/proposed-seed.md
 - consumption_aware_cap=docs/weight-caps/consumption-aware.md
 

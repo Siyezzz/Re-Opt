@@ -8,6 +8,8 @@ from pathlib import Path
 
 from .outcomes import OutcomeRecord, dump_outcomes, load_outcomes
 
+REQUIRED_SIGNAL_FIELDS = ("token", "minute", "missed_optional")
+
 
 @dataclass(frozen=True)
 class ObservedRunCounters:
@@ -70,6 +72,23 @@ def render_capture_report(outcome: OutcomeRecord, counters: ObservedRunCounters)
     return "\n".join(lines) + "\n"
 
 
+def required_signal_failures(
+    outcome: OutcomeRecord,
+    required_signals: tuple[str, ...],
+) -> tuple[str, ...]:
+    failures = []
+    for signal in required_signals:
+        if signal == "token" and outcome.actual_tokens <= outcome.token_budget:
+            failures.append("token signal requires actual_tokens above token_budget")
+        elif signal == "minute" and outcome.actual_minutes <= outcome.time_budget_minutes:
+            failures.append("minute signal requires actual_minutes above time_budget_minutes")
+        elif signal == "missed_optional" and outcome.missed_optional_harm <= 0:
+            failures.append("missed_optional signal requires missed_optional_harm above 0")
+        elif signal not in REQUIRED_SIGNAL_FIELDS:
+            failures.append(f"unsupported required signal: {signal}")
+    return tuple(failures)
+
+
 def _validate_counters(counters: ObservedRunCounters) -> None:
     if counters.tokens_after < counters.tokens_before:
         raise ValueError("tokens_after must be greater than or equal to tokens_before")
@@ -91,6 +110,13 @@ def main() -> None:
     parser.add_argument("--time-budget-minutes", type=int, required=True)
     parser.add_argument("--missed-optional-harm", type=float, default=0.0)
     parser.add_argument("--evidence-ref", required=True)
+    parser.add_argument(
+        "--require-signal",
+        action="append",
+        choices=REQUIRED_SIGNAL_FIELDS,
+        default=[],
+        help="Require the captured outcome to support a field-specific signal.",
+    )
     parser.add_argument("--write", type=Path, help="Write the captured outcome JSON.")
     parser.add_argument(
         "--append",
@@ -117,6 +143,11 @@ def main() -> None:
         evidence_ref=args.evidence_ref,
         counters=counters,
     )
+    failures = required_signal_failures(outcome, tuple(args.require_signal))
+    if failures:
+        for failure in failures:
+            print(f"error: {failure}")
+        raise SystemExit(1)
     if args.write:
         outcomes = (outcome,)
         if args.append and args.write.exists():
