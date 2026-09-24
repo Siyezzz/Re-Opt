@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .outcomes import OutcomeRecord, dump_outcomes, load_outcomes
 
-REQUIRED_SIGNAL_FIELDS = ("token", "minute", "missed_optional")
+REQUIRED_SIGNAL_FIELDS = ("quality", "token", "minute", "missed_optional")
 
 
 @dataclass(frozen=True)
@@ -105,7 +105,9 @@ def required_signal_failures(
 ) -> tuple[str, ...]:
     failures = []
     for signal in required_signals:
-        if signal == "token" and outcome.actual_tokens <= outcome.token_budget:
+        if signal == "quality" and outcome.observed_quality >= outcome.target_quality:
+            failures.append("quality signal requires observed_quality below target_quality")
+        elif signal == "token" and outcome.actual_tokens <= outcome.token_budget:
             failures.append("token signal requires actual_tokens above token_budget")
         elif signal == "minute" and outcome.actual_minutes <= outcome.time_budget_minutes:
             failures.append("minute signal requires actual_minutes above time_budget_minutes")

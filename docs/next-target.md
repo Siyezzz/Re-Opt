@@ -1,19 +1,19 @@
 # Next Re-Opt Target
 
-title: Collect unconsumed cost and optional-harm evidence
+title: Collect unconsumed outcome evidence before quality adoption
 
-rationale: Consumption-aware calibration removes the already-consumed quality signal, and the remaining token, minute, and missed-optional increments have no clean cap. The next optimization should gather fresh unconsumed evidence for those non-quality signals before changing cost weights.
+rationale: A clean observed-quality proposal exists, but the consumption audit shows its supporting quality signal has already been used for an earlier adoption. The next optimization should gather new unconsumed quality evidence before raising the quality weight again.
 
 Evidence:
 
-- latest_next_refinement=Capture a real before/after goal pair that passes the delta readiness gate, then run `reopt.observed_run` and consumption-aware evidence review.
+- latest_next_refinement=Run `reopt.observed_pipeline` on a real before/after goal pair, then inspect the generated consumption-aware review before considering any cost-weight changes.
 - blocked_reports=adoption-reports/proposed-observed-consumption-aware.md, adoption-reports/proposed-observed-evidence.md, adoption-reports/proposed-seed.md
-- consumption_aware_cap=docs/weight-caps/consumption-aware.md
+- clean_reports=adoption-reports/proposed-observed-quality.md
+- consumption_audit=docs/outcome-consumption/proposed-observed-quality.md
 
 Suggested commands:
 
 - `python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md`
-- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for token --require-evidence-ref`
-- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for minute --require-evidence-ref`
-- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for missed_optional --require-evidence-ref`
+- `python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for quality --require-evidence-ref`
+- `python -m reopt.outcome_consumption weights/proposed-observed-quality.json --write-report docs/outcome-consumption/proposed-observed-quality.md`
 - `python -m reopt.regression --check`

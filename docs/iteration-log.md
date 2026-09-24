@@ -1248,3 +1248,32 @@ responsible for missed-optional harm and per-record evidence.
 
 Capture a real before/after goal pair that passes the delta readiness gate, then
 run `reopt.observed_run` and consumption-aware evidence review.
+
+## 2026-09-24 - Observed Evidence Pipeline
+
+### Objective
+
+Reduce the multi-step observed evidence flow to one reproducible command after
+raw before/after goal snapshots are available.
+
+### Implementation
+
+Added `reopt.observed_pipeline`, which normalizes raw goal snapshots, writes the
+goal delta report, captures `outcomes/next-outcome.json`, validates the required
+field-specific signal and evidence ref, then writes the consumption-aware
+observed evidence review. Required signals can now include quality, token,
+minute, and missed-optional evidence.
+
+### Observed Result
+
+A fixture with goal snapshots that pass the relevant gates writes the normalized
+snapshots, captured outcome, capture report, proposed weights, and observed
+evidence review. The intake document now offers this pipeline command before the
+individual debug commands, and quality-only targets no longer inherit token or
+minute overrun gates.
+
+### Next Refinement
+
+Run `reopt.observed_pipeline` on a real before/after goal pair, then inspect the
+generated consumption-aware review before considering another quality-weight
+change.

@@ -39,6 +39,7 @@ from reopt.evidence_review import (
     write_simulated_outcome,
 )
 from reopt.observed_evidence import review_observed_evidence
+from reopt.observed_pipeline import run_observed_pipeline
 from reopt.observed_run import (
     ObservedRunCounters,
     counters_from_goal_snapshots,
@@ -294,9 +295,10 @@ class HeuristicSchedulerTest(unittest.TestCase):
 
         failures = required_signal_failures(
             outcome,
-            ("token", "minute", "missed_optional"),
+            ("quality", "token", "minute", "missed_optional"),
         )
 
+        self.assertIn("quality signal requires observed_quality below target_quality", failures)
         self.assertNotIn("token signal requires actual_tokens above token_budget", failures)
         self.assertIn("minute signal requires actual_minutes above time_budget_minutes", failures)
         self.assertIn("missed_optional signal requires missed_optional_harm above 0", failures)
@@ -397,6 +399,79 @@ class HeuristicSchedulerTest(unittest.TestCase):
 
         self.assertNotIn("token delta must be above token budget", failures)
         self.assertIn("minute delta must be above time budget", failures)
+
+    def test_observed_pipeline_writes_outcome_and_consumption_aware_review(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            raw_before = root / "raw-before.json"
+            raw_after = root / "raw-after.json"
+            existing_path = root / "existing.json"
+            baseline_path = root / "baseline.json"
+            ledger_path = root / "ledger.json"
+            goal_before_path = root / "goal-before.json"
+            goal_after_path = root / "goal-after.json"
+            goal_delta_path = root / "goal-delta.json"
+            outcome_path = root / "next-outcome.json"
+            capture_report_path = root / "capture.md"
+            weights_path = root / "weights.json"
+            evidence_report_path = root / "observed.md"
+            raw_before.write_text(
+                json.dumps({"goal": {"tokensUsed": 1000, "timeUsedSeconds": 600}}),
+                encoding="utf-8",
+            )
+            raw_after.write_text(
+                json.dumps({"goal": {"tokensUsed": 14000, "timeUsedSeconds": 6300}}),
+                encoding="utf-8",
+            )
+            dump_outcomes(
+                existing_path,
+                (
+                    OutcomeRecord(
+                        graph_id="tight-research-seed",
+                        strategy="budget-pruning-v0",
+                        observed_quality=0.7,
+                        target_quality=0.8,
+                        actual_tokens=7600,
+                        token_budget=7000,
+                        actual_minutes=70,
+                        time_budget_minutes=65,
+                        missed_optional_harm=0.4,
+                    ),
+                ),
+            )
+            ledger_path.write_text("[]", encoding="utf-8")
+            write_seed_snapshot(baseline_path)
+
+            report = run_observed_pipeline(
+                raw_goal_before=raw_before,
+                raw_goal_after=raw_after,
+                graph_id="coding-debug-seed",
+                strategy="critical-path-a-star-v0",
+                observed_quality=0.85,
+                target_quality=0.8,
+                token_budget=12000,
+                time_budget_minutes=90,
+                missed_optional_harm=0.2,
+                evidence_ref="goal snapshot fixture",
+                existing_path=existing_path,
+                baseline_path=baseline_path,
+                ledger_path=ledger_path,
+                goal_before_path=goal_before_path,
+                goal_after_path=goal_after_path,
+                goal_delta_path=goal_delta_path,
+                outcome_path=outcome_path,
+                capture_report_path=capture_report_path,
+                proposed_weights_path=weights_path,
+                evidence_report_path=evidence_report_path,
+            )
+
+            self.assertIn("status: clean", report)
+            self.assertTrue(outcome_path.exists())
+            self.assertTrue(evidence_report_path.exists())
+            outcome = load_outcomes(outcome_path)[0]
+            self.assertEqual(outcome.actual_tokens, 13000)
+            self.assertEqual(outcome.actual_minutes, 95)
+            self.assertEqual(outcome.missed_optional_harm, 0.2)
 
     def test_consumption_aware_calibration_excludes_consumed_quality_signal(self) -> None:
         base = UtilityWeights()
@@ -841,6 +916,9 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertLess(request.suggested_record.observed_quality, request.suggested_record.target_quality)
         self.assertIn("Required signals:", rendered)
         self.assertIn("--require-unconsumed-for quality", rendered)
+        self.assertIn("--require-signal quality", rendered)
+        self.assertNotIn("--require-token-over", rendered)
+        self.assertNotIn("--require-minute-over", rendered)
 
     def test_outcome_intake_requests_unconsumed_cost_and_optional_signals(self) -> None:
         with TemporaryDirectory() as tmp:

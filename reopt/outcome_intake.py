@@ -73,6 +73,7 @@ def suggest_outcome_intake(
         required_signals=required_signals,
         suggested_record=suggested,
         suggested_commands=(
+            _pipeline_command(suggested),
             "python -m reopt.goal_snapshot --input docs/outcome-evidence/raw-goal-before.json --write docs/outcome-evidence/goal-before.json",
             "python -m reopt.goal_snapshot --input docs/outcome-evidence/raw-goal-after.json --write docs/outcome-evidence/goal-after.json",
             _delta_command(suggested),
@@ -269,18 +270,45 @@ def _capture_command(outcome: OutcomeRecord) -> str:
 
 
 def _delta_command(outcome: OutcomeRecord) -> str:
+    required_flags = []
+    if outcome.actual_tokens > outcome.token_budget:
+        required_flags.append(f"--require-token-over {outcome.token_budget}")
+    if outcome.actual_minutes > outcome.time_budget_minutes:
+        required_flags.append(f"--require-minute-over {outcome.time_budget_minutes}")
+    required_text = " ".join(required_flags)
+    if required_text:
+        required_text += " "
     return (
         "python -m reopt.goal_snapshot "
         "--before docs/outcome-evidence/goal-before.json "
         "--after docs/outcome-evidence/goal-after.json "
-        f"--require-token-over {outcome.token_budget} "
-        f"--require-minute-over {outcome.time_budget_minutes} "
+        f"{required_text}"
         "--write docs/outcome-evidence/goal-delta.json"
+    )
+
+
+def _pipeline_command(outcome: OutcomeRecord) -> str:
+    return (
+        "python -m reopt.observed_pipeline "
+        "--raw-goal-before docs/outcome-evidence/raw-goal-before.json "
+        "--raw-goal-after docs/outcome-evidence/raw-goal-after.json "
+        f"--graph-id {outcome.graph_id} "
+        f"--strategy {outcome.strategy} "
+        f"--observed-quality {outcome.observed_quality} "
+        f"--target-quality {outcome.target_quality} "
+        f"--token-budget {outcome.token_budget} "
+        f"--time-budget-minutes {outcome.time_budget_minutes} "
+        f"--missed-optional-harm {outcome.missed_optional_harm} "
+        "--evidence-ref OBSERVED_RUN_POINTER "
+        f"{_capture_signal_flags(outcome)}"
+        "--write-report docs/outcome-evidence/observed-pipeline.md"
     )
 
 
 def _capture_signal_flags(outcome: OutcomeRecord) -> str:
     flags = []
+    if outcome.observed_quality < outcome.target_quality:
+        flags.append("--require-signal quality")
     if outcome.actual_tokens > outcome.token_budget:
         flags.append("--require-signal token")
     if outcome.actual_minutes > outcome.time_budget_minutes:
