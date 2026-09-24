@@ -44,6 +44,7 @@ python -m reopt.goal_snapshot --input docs/outcome-evidence/raw-goal-before.json
 python -m reopt.goal_snapshot --input docs/outcome-evidence/raw-goal-after.json --write docs/outcome-evidence/goal-after.json
 python -m reopt.goal_snapshot --before docs/outcome-evidence/goal-before.json --after docs/outcome-evidence/goal-after.json --require-token-over 12000 --require-minute-over 90 --write docs/outcome-evidence/goal-delta.json
 python -m reopt.observed_run --graph-id coding-debug-seed --strategy critical-path-a-star-v0 --observed-quality 0.85 --target-quality 0.8 --goal-before docs/outcome-evidence/goal-before.json --goal-after docs/outcome-evidence/goal-after.json --token-budget 12000 --time-budget-minutes 90 --missed-optional-harm 0.2 --evidence-ref OBSERVED_RUN_POINTER --require-signal token --require-signal minute --require-signal missed_optional --write outcomes/next-outcome.json --write-report docs/outcome-evidence/observed-run-capture.md
+python -m reopt.quality_review docs/outcome-evidence/quality-review.json --write-report docs/outcome-evidence/quality-review.md
 python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-evidence-ref
 python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for quality --require-evidence-ref
 python -m reopt.observed_evidence --candidate outcomes/next-outcome.json --write-weights weights/proposed-observed-evidence.json --write-report docs/outcome-evidence/observed-next-outcome.md --provenance "commit 69f87f4 Add capped adoption decision; 31 tests passed; regression gate passed"
@@ -84,6 +85,7 @@ The current implementation is intentionally small:
 - `reopt.goal_snapshot` normalizes Codex goal snapshots for observed-run capture
 - `reopt.observed_run` captures an observed run from before/after counters or goal snapshots, with optional required-signal checks
 - `reopt.observed_pipeline` runs snapshot normalization, capture, validation, and consumption-aware review, with overridable output paths for smoke tests
+- `reopt.quality_review` scores observed quality from an explicit rubric before quality evidence is consumed
 - `reopt.observed_evidence` reviews fresh observed outcome evidence before adoption
 - `reopt.outcome_consumption` blocks repeated use of already-consumed outcome signals
 - `reopt.evidence_review` probes expanded outcome evidence before adoption

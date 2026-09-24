@@ -47,6 +47,7 @@ from reopt.observed_run import (
     required_signal_failures,
     render_capture_report,
 )
+from reopt.quality_review import load_quality_review, observed_quality, render_quality_review
 from reopt.goal_snapshot import (
     delta_gate_failures,
     render_goal_snapshot,
@@ -1115,6 +1116,138 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertTrue(any("no unconsumed quality signal" in failure for failure in blocked_failures))
         self.assertTrue(clean_ok)
         self.assertEqual(clean_failures, ())
+
+    def test_quality_review_scores_explicit_rubric(self) -> None:
+        with TemporaryDirectory() as tmp:
+            review_path = Path(tmp) / "quality-review.json"
+            review_path.write_text(
+                json.dumps(
+                    {
+                        "graph_id": "research-synthesis-seed",
+                        "strategy": "critical-path-a-star-v0",
+                        "target_quality": 0.8,
+                        "evidence_ref": "reviewed artifact docs/outcome-evidence/report.md",
+                        "criteria": [
+                            {
+                                "name": "answered primary question",
+                                "score": 0.8,
+                                "weight": 2,
+                                "evidence": "main answer is present",
+                            },
+                            {
+                                "name": "covered required constraints",
+                                "score": 0.5,
+                                "weight": 2,
+                                "evidence": "dependency ordering was missing",
+                            },
+                            {
+                                "name": "verification strength",
+                                "score": 0.65,
+                                "weight": 1,
+                                "evidence": "tests ran but no external check",
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            review = load_quality_review(review_path)
+            report = render_quality_review(review)
+
+        self.assertEqual(observed_quality(review), 0.65)
+        self.assertIn("status: clean", report)
+        self.assertIn("observed_quality: 0.65", report)
+
+    def test_outcome_intake_validation_requires_matching_quality_review(self) -> None:
+        with TemporaryDirectory() as tmp:
+            existing_path = Path(tmp) / "existing.json"
+            candidate_path = Path(tmp) / "candidate.json"
+            review_path = Path(tmp) / "quality-review.json"
+            ledger_path = Path(tmp) / "ledger.json"
+            dump_outcomes(existing_path, ())
+            dump_outcomes(
+                candidate_path,
+                (
+                    OutcomeRecord(
+                        graph_id="research-synthesis-seed",
+                        strategy="critical-path-a-star-v0",
+                        observed_quality=0.65,
+                        target_quality=0.8,
+                        actual_tokens=14000,
+                        token_budget=16000,
+                        actual_minutes=110,
+                        time_budget_minutes=120,
+                        evidence_ref="reviewed artifact docs/outcome-evidence/report.md",
+                    ),
+                ),
+            )
+            review_path.write_text(
+                json.dumps(
+                    {
+                        "graph_id": "research-synthesis-seed",
+                        "strategy": "critical-path-a-star-v0",
+                        "target_quality": 0.8,
+                        "evidence_ref": "reviewed artifact docs/outcome-evidence/report.md",
+                        "criteria": [
+                            {
+                                "name": "answered primary question",
+                                "score": 0.65,
+                                "evidence": "answer missed a required dependency caveat",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ledger_path.write_text("[]", encoding="utf-8")
+
+            clean_ok, clean_failures = validate_outcome_intake(
+                candidate_path,
+                existing_path,
+                require_unconsumed_for="quality",
+                ledger_path=ledger_path,
+                require_evidence_ref=True,
+                quality_review_path=review_path,
+            )
+            review_path.write_text(
+                json.dumps(
+                    {
+                        "graph_id": "research-synthesis-seed",
+                        "strategy": "critical-path-a-star-v0",
+                        "target_quality": 0.8,
+                        "evidence_ref": "different artifact",
+                        "criteria": [
+                            {
+                                "name": "answered primary question",
+                                "score": 0.9,
+                                "evidence": "answer appears complete",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            blocked_ok, blocked_failures = validate_outcome_intake(
+                candidate_path,
+                existing_path,
+                require_unconsumed_for="quality",
+                ledger_path=ledger_path,
+                require_evidence_ref=True,
+                quality_review_path=review_path,
+            )
+
+        self.assertTrue(clean_ok)
+        self.assertEqual(clean_failures, ())
+        self.assertFalse(blocked_ok)
+        self.assertIn(
+            "quality review observed_quality does not match candidate outcome",
+            blocked_failures,
+        )
+        self.assertIn(
+            "quality review evidence_ref does not match candidate outcome",
+            blocked_failures,
+        )
 
     def test_evidence_review_keeps_synthetic_probe_separate(self) -> None:
         with TemporaryDirectory() as tmp:

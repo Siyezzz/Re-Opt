@@ -14,6 +14,11 @@ from .outcome_consumption import (
     outcome_key,
 )
 from .outcomes import OutcomeRecord, load_outcomes
+from .quality_review import (
+    load_quality_review,
+    observed_quality,
+    quality_review_failures,
+)
 
 
 @dataclass(frozen=True)
@@ -43,6 +48,11 @@ def suggest_outcome_intake(
         "python -m reopt.outcome_intake --validate "
         f"outcomes/next-outcome.json --require-unconsumed-for {field} "
         "--require-evidence-ref"
+        + (
+            " --quality-review docs/outcome-evidence/quality-review.json"
+            if field == "quality"
+            else ""
+        )
         for field in required_fields_for_signals
     )
     if not validation_commands:
@@ -78,6 +88,7 @@ def suggest_outcome_intake(
             "python -m reopt.goal_snapshot --input docs/outcome-evidence/raw-goal-after.json --write docs/outcome-evidence/goal-after.json",
             _delta_command(suggested),
             _capture_command(suggested),
+            *_quality_review_commands(required_fields_for_signals),
             *validation_commands,
             "python -m reopt.outcomes outcomes/next-outcome.json",
             "python -m reopt.calibrate outcomes/next-outcome.json",
@@ -143,6 +154,7 @@ def validate_outcome_intake(
     require_unconsumed_for: str | None = None,
     ledger_path: Path = DEFAULT_LEDGER,
     require_evidence_ref: bool = False,
+    quality_review_path: Path | None = None,
 ) -> tuple[bool, tuple[str, ...]]:
     existing = {_outcome_key(outcome) for outcome in load_outcomes(existing_path)}
     candidate = load_outcomes(candidate_path)
@@ -180,6 +192,8 @@ def validate_outcome_intake(
             failures.append(
                 f"no unconsumed {require_unconsumed_for} signal found in candidate outcomes"
             )
+    if quality_review_path:
+        failures.extend(_quality_review_validation_failures(candidate, quality_review_path))
     return (not failures, tuple(failures))
 
 
@@ -190,6 +204,35 @@ def render_validation_report(ok: bool, failures: tuple[str, ...]) -> str:
         for failure in failures:
             lines.append(f"- {failure}")
     return "\n".join(lines) + "\n"
+
+
+def _quality_review_validation_failures(
+    candidate: tuple[OutcomeRecord, ...],
+    quality_review_path: Path,
+) -> tuple[str, ...]:
+    review = load_quality_review(quality_review_path)
+    failures = list(quality_review_failures(review))
+    matching = tuple(
+        outcome
+        for outcome in candidate
+        if outcome.graph_id == review.graph_id and outcome.strategy == review.strategy
+    )
+    if not matching:
+        failures.append(
+            "quality review does not match any candidate outcome graph_id/strategy"
+        )
+        return tuple(failures)
+    quality = observed_quality(review)
+    for outcome in matching:
+        if abs(outcome.observed_quality - quality) > 0.0001:
+            failures.append(
+                "quality review observed_quality does not match candidate outcome"
+            )
+        if abs(outcome.target_quality - review.target_quality) > 0.0001:
+            failures.append("quality review target_quality does not match candidate outcome")
+        if outcome.evidence_ref != review.evidence_ref:
+            failures.append("quality review evidence_ref does not match candidate outcome")
+    return tuple(failures)
 
 
 def _suggest_record(
@@ -305,6 +348,14 @@ def _pipeline_command(outcome: OutcomeRecord) -> str:
     )
 
 
+def _quality_review_commands(required_fields: tuple[str, ...]) -> tuple[str, ...]:
+    if "quality" not in required_fields:
+        return ()
+    return (
+        "python -m reopt.quality_review docs/outcome-evidence/quality-review.json --write-report docs/outcome-evidence/quality-review.md",
+    )
+
+
 def _capture_signal_flags(outcome: OutcomeRecord) -> str:
     flags = []
     if outcome.observed_quality < outcome.target_quality:
@@ -384,6 +435,11 @@ def main() -> None:
         action="store_true",
         help="Require each candidate record to include a non-placeholder evidence_ref.",
     )
+    parser.add_argument(
+        "--quality-review",
+        type=Path,
+        help="Require a quality rubric review matching the candidate outcome.",
+    )
     args = parser.parse_args()
     if args.validate:
         ok, failures = validate_outcome_intake(
@@ -392,6 +448,7 @@ def main() -> None:
             args.require_unconsumed_for,
             args.ledger,
             args.require_evidence_ref,
+            args.quality_review,
         )
         print(render_validation_report(ok, failures))
         raise SystemExit(0 if ok else 1)

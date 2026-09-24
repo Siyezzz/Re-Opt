@@ -1310,3 +1310,35 @@ evidence only.
 
 Capture or construct a genuinely under-target outcome before using
 `--require-signal quality` to justify another quality-weight change.
+
+## 2026-09-24 - Quality Rubric Gate
+
+### Objective
+
+Stop `observed_quality` from being an unaudited hand-entered number when the
+next target asks for unconsumed quality evidence.
+
+### Implementation
+
+Added `reopt.quality_review`, a rubric scorer that computes observed quality
+from weighted criteria and requires per-criterion evidence. `reopt.outcome_intake`
+can now validate that a candidate outcome's graph, strategy, target quality,
+observed quality, and evidence ref match a quality review JSON file.
+
+### Observed Result
+
+The test suite now covers rubric scoring, clean matching between outcome and
+quality review, and blocked validation when the review score or evidence ref
+does not match the outcome. The generated intake document includes both the
+quality review report command and a validation command with `--quality-review`.
+
+### Weakness
+
+This creates a stronger gate for quality evidence, but it still needs a real
+reviewed artifact whose rubric score is below target before the quality weight
+can be changed responsibly.
+
+### Next Refinement
+
+Use the quality review gate on the next genuinely under-target observed run,
+then run the consumption-aware review before considering quality-weight adoption.
