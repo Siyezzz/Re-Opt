@@ -75,7 +75,7 @@ def suggest_outcome_intake(
         suggested_commands=(
             "python -m reopt.goal_snapshot --input docs/outcome-evidence/raw-goal-before.json --write docs/outcome-evidence/goal-before.json",
             "python -m reopt.goal_snapshot --input docs/outcome-evidence/raw-goal-after.json --write docs/outcome-evidence/goal-after.json",
-            "python -m reopt.goal_snapshot --before docs/outcome-evidence/goal-before.json --after docs/outcome-evidence/goal-after.json --write docs/outcome-evidence/goal-delta.json",
+            _delta_command(suggested),
             _capture_command(suggested),
             *validation_commands,
             "python -m reopt.outcomes outcomes/next-outcome.json",
@@ -265,6 +265,17 @@ def _capture_command(outcome: OutcomeRecord) -> str:
         f"{_capture_signal_flags(outcome)}"
         "--write outcomes/next-outcome.json "
         "--write-report docs/outcome-evidence/observed-run-capture.md"
+    )
+
+
+def _delta_command(outcome: OutcomeRecord) -> str:
+    return (
+        "python -m reopt.goal_snapshot "
+        "--before docs/outcome-evidence/goal-before.json "
+        "--after docs/outcome-evidence/goal-after.json "
+        f"--require-token-over {outcome.token_budget} "
+        f"--require-minute-over {outcome.time_budget_minutes} "
+        "--write docs/outcome-evidence/goal-delta.json"
     )
 
 

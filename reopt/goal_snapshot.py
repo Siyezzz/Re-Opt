@@ -53,6 +53,22 @@ def render_goal_snapshot_delta(before_json: str, after_json: str) -> str:
     return json.dumps({"delta": delta}, indent=2, sort_keys=True) + "\n"
 
 
+def delta_gate_failures(
+    delta: dict[str, int],
+    token_budget: int | None = None,
+    time_budget_minutes: int | None = None,
+) -> tuple[str, ...]:
+    failures = []
+    if token_budget is not None and delta["tokensUsedDelta"] <= token_budget:
+        failures.append("token delta must be above token budget")
+    if (
+        time_budget_minutes is not None
+        and delta["timeUsedMinutesDelta"] <= time_budget_minutes
+    ):
+        failures.append("minute delta must be above time budget")
+    return tuple(failures)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Normalize a Codex get_goal JSON snapshot.")
     parser.add_argument(
@@ -63,15 +79,34 @@ def main() -> None:
     parser.add_argument("--write", type=Path, help="Write normalized snapshot JSON.")
     parser.add_argument("--before", type=Path, help="Normalized or raw goal snapshot before a run.")
     parser.add_argument("--after", type=Path, help="Normalized or raw goal snapshot after a run.")
+    parser.add_argument(
+        "--require-token-over",
+        type=int,
+        help="Require tokensUsedDelta to exceed this token budget.",
+    )
+    parser.add_argument(
+        "--require-minute-over",
+        type=int,
+        help="Require timeUsedMinutesDelta to exceed this minute budget.",
+    )
     args = parser.parse_args()
 
     if args.before or args.after:
         if not (args.before and args.after):
             raise SystemExit("error: --before and --after must be provided together")
-        rendered = render_goal_snapshot_delta(
-            args.before.read_text(encoding="utf-8"),
-            args.after.read_text(encoding="utf-8"),
+        before_json = args.before.read_text(encoding="utf-8")
+        after_json = args.after.read_text(encoding="utf-8")
+        rendered = render_goal_snapshot_delta(before_json, after_json)
+        delta = json.loads(rendered)["delta"]
+        failures = delta_gate_failures(
+            delta,
+            args.require_token_over,
+            args.require_minute_over,
         )
+        if failures:
+            for failure in failures:
+                print(f"error: {failure}")
+            raise SystemExit(1)
         if args.write:
             args.write.parent.mkdir(parents=True, exist_ok=True)
             args.write.write_text(rendered, encoding="utf-8")

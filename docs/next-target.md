@@ -6,7 +6,7 @@ rationale: Consumption-aware calibration removes the already-consumed quality si
 
 Evidence:
 
-- latest_next_refinement=Capture a real before/after goal pair, inspect `goal-delta.json`, then generate and review the observed outcome.
+- latest_next_refinement=Capture a real before/after goal pair that passes the delta readiness gate, then run `reopt.observed_run` and consumption-aware evidence review.
 - blocked_reports=adoption-reports/proposed-observed-consumption-aware.md, adoption-reports/proposed-observed-evidence.md, adoption-reports/proposed-seed.md
 - consumption_aware_cap=docs/weight-caps/consumption-aware.md
 

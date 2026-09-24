@@ -46,7 +46,11 @@ from reopt.observed_run import (
     required_signal_failures,
     render_capture_report,
 )
-from reopt.goal_snapshot import render_goal_snapshot, render_goal_snapshot_delta
+from reopt.goal_snapshot import (
+    delta_gate_failures,
+    render_goal_snapshot,
+    render_goal_snapshot_delta,
+)
 from reopt.outcome_consumption import audit_consumption, render_consumption_audit
 from reopt.increment_cap import find_largest_clean_cap, render_cap_report
 from reopt.adoption_decision import decide_adoption, render_decision
@@ -379,6 +383,20 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertEqual(data["delta"]["tokensUsedDelta"], 13000)
         self.assertEqual(data["delta"]["timeUsedSecondsDelta"], 5700)
         self.assertEqual(data["delta"]["timeUsedMinutesDelta"], 95)
+
+    def test_goal_snapshot_delta_gate_reports_missing_overruns(self) -> None:
+        failures = delta_gate_failures(
+            {
+                "tokensUsedDelta": 13000,
+                "timeUsedSecondsDelta": 3600,
+                "timeUsedMinutesDelta": 60,
+            },
+            token_budget=12000,
+            time_budget_minutes=90,
+        )
+
+        self.assertNotIn("token delta must be above token budget", failures)
+        self.assertIn("minute delta must be above time budget", failures)
 
     def test_consumption_aware_calibration_excludes_consumed_quality_signal(self) -> None:
         base = UtilityWeights()

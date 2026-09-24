@@ -1225,3 +1225,26 @@ adds a `goal-delta.json` report before observed-run capture.
 
 Capture a real before/after goal pair, inspect `goal-delta.json`, then generate
 and review the observed outcome.
+
+## 2026-09-24 - Goal Delta Readiness Gate
+
+### Objective
+
+Stop low-signal goal snapshot pairs before they reach `reopt.observed_run`.
+
+### Implementation
+
+Added `--require-token-over` and `--require-minute-over` to the
+`reopt.goal_snapshot --before/--after` mode. The intake flow now passes the
+current suggested token and minute budgets into the delta check.
+
+### Observed Result
+
+A delta with token overrun but no minute overrun now reports the missing minute
+signal at the snapshot-pair stage. The observed-run capture step remains
+responsible for missed-optional harm and per-record evidence.
+
+### Next Refinement
+
+Capture a real before/after goal pair that passes the delta readiness gate, then
+run `reopt.observed_run` and consumption-aware evidence review.
