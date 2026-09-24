@@ -83,7 +83,7 @@ The current implementation is intentionally small:
 - `reopt.outcome_intake --require-unconsumed-for` validates that a filled outcome supplies a new field-specific signal
 - `reopt.goal_snapshot` normalizes Codex goal snapshots for observed-run capture
 - `reopt.observed_run` captures an observed run from before/after counters or goal snapshots, with optional required-signal checks
-- `reopt.observed_pipeline` runs snapshot normalization, capture, validation, and consumption-aware review
+- `reopt.observed_pipeline` runs snapshot normalization, capture, validation, and consumption-aware review, with overridable output paths for smoke tests
 - `reopt.observed_evidence` reviews fresh observed outcome evidence before adoption
 - `reopt.outcome_consumption` blocks repeated use of already-consumed outcome signals
 - `reopt.evidence_review` probes expanded outcome evidence before adoption

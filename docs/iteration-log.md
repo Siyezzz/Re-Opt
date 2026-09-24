@@ -1277,3 +1277,36 @@ minute overrun gates.
 Run `reopt.observed_pipeline` on a real before/after goal pair, then inspect the
 generated consumption-aware review before considering another quality-weight
 change.
+
+## 2026-09-24 - Pipeline Smoke Output Paths
+
+### Objective
+
+Make `reopt.observed_pipeline` safe to smoke test without overwriting the formal
+outcome, weight, or evidence artifacts.
+
+### Implementation
+
+Added CLI output path flags for normalized goal snapshots, the goal delta,
+captured outcome, capture report, proposed weights, and evidence report. The
+pipeline still defaults to the formal artifact locations, but tests and
+experiments can now redirect every output to a temporary directory.
+
+### Observed Result
+
+A CLI smoke run redirected all outputs to a temporary directory and returned
+`status: clean`. The current run snapshots were also captured in
+`docs/outcome-evidence/raw-goal-before.json` and
+`docs/outcome-evidence/raw-goal-after.json`, producing a delta of 7020 tokens
+and 90 seconds.
+
+### Weakness
+
+This run was successful, so it should not be treated as low-quality evidence for
+raising the quality weight. It is useful as reproducibility and resource-side
+evidence only.
+
+### Next Refinement
+
+Capture or construct a genuinely under-target outcome before using
+`--require-signal quality` to justify another quality-weight change.

@@ -201,6 +201,48 @@ def main() -> None:
     parser.add_argument("--existing", type=Path, default=Path("outcomes/seed-outcomes.json"))
     parser.add_argument("--baseline", type=Path, default=DEFAULT_BASELINE)
     parser.add_argument("--ledger", type=Path, default=Path("docs/outcome-consumption/ledger.json"))
+    parser.add_argument(
+        "--goal-before",
+        type=Path,
+        default=Path("docs/outcome-evidence/goal-before.json"),
+        help="Write normalized before snapshot JSON.",
+    )
+    parser.add_argument(
+        "--goal-after",
+        type=Path,
+        default=Path("docs/outcome-evidence/goal-after.json"),
+        help="Write normalized after snapshot JSON.",
+    )
+    parser.add_argument(
+        "--goal-delta",
+        type=Path,
+        default=Path("docs/outcome-evidence/goal-delta.json"),
+        help="Write goal delta JSON.",
+    )
+    parser.add_argument(
+        "--outcome",
+        type=Path,
+        default=Path("outcomes/next-outcome.json"),
+        help="Write captured outcome JSON.",
+    )
+    parser.add_argument(
+        "--capture-report",
+        type=Path,
+        default=Path("docs/outcome-evidence/observed-run-capture.md"),
+        help="Write observed-run capture Markdown.",
+    )
+    parser.add_argument(
+        "--proposed-weights",
+        type=Path,
+        default=Path("weights/proposed-observed-consumption-aware.json"),
+        help="Write proposed consumption-aware weights.",
+    )
+    parser.add_argument(
+        "--evidence-report",
+        type=Path,
+        default=Path("docs/outcome-evidence/observed-consumption-aware.md"),
+        help="Write consumption-aware evidence Markdown.",
+    )
     parser.add_argument("--write-report", type=Path, help="Write pipeline report.")
     args = parser.parse_args()
 
@@ -219,6 +261,13 @@ def main() -> None:
         existing_path=args.existing,
         baseline_path=args.baseline,
         ledger_path=args.ledger,
+        goal_before_path=args.goal_before,
+        goal_after_path=args.goal_after,
+        goal_delta_path=args.goal_delta,
+        outcome_path=args.outcome,
+        capture_report_path=args.capture_report,
+        proposed_weights_path=args.proposed_weights,
+        evidence_report_path=args.evidence_report,
     )
     if args.write_report:
         args.write_report.parent.mkdir(parents=True, exist_ok=True)
