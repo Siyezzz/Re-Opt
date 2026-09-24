@@ -6,7 +6,7 @@ rationale: Consumption-aware calibration removes the already-consumed quality si
 
 Evidence:
 
-- latest_next_refinement=Save real `get_goal` before/after snapshots for a future task turn, run `reopt.observed_run` from those files, and use the resulting outcome for consumption-aware evidence review.
+- latest_next_refinement=Capture actual before/after goal snapshots around a future task turn, normalize them with `reopt.goal_snapshot`, then run `reopt.observed_run` and consumption-aware evidence review.
 - blocked_reports=adoption-reports/proposed-observed-consumption-aware.md, adoption-reports/proposed-observed-evidence.md, adoption-reports/proposed-seed.md
 - consumption_aware_cap=docs/weight-caps/consumption-aware.md
 

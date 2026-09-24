@@ -1175,3 +1175,29 @@ counter placeholders.
 Save real `get_goal` before/after snapshots for a future task turn, run
 `reopt.observed_run` from those files, and use the resulting outcome for
 consumption-aware evidence review.
+
+## 2026-09-24 - Goal Snapshot Normalization
+
+### Objective
+
+Make before/after goal snapshots easy to save without committing raw objective
+text or unrelated goal metadata.
+
+### Implementation
+
+Added `reopt.goal_snapshot`, which reads a Codex `get_goal` JSON object and
+writes the minimal shape needed by `reopt.observed_run`: `tokensUsed`,
+`timeUsedSeconds`, `status`, and optional `updatedAt`.
+
+### Observed Result
+
+The intake flow now starts by normalizing `raw-goal-before.json` and
+`raw-goal-after.json` into stable `goal-before.json` and `goal-after.json`
+snapshots. Tests confirm that private objective text is not copied into the
+normalized snapshot.
+
+### Next Refinement
+
+Capture actual before/after goal snapshots around a future task turn, normalize
+them with `reopt.goal_snapshot`, then run `reopt.observed_run` and
+consumption-aware evidence review.

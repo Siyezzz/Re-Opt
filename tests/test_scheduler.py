@@ -46,6 +46,7 @@ from reopt.observed_run import (
     required_signal_failures,
     render_capture_report,
 )
+from reopt.goal_snapshot import render_goal_snapshot
 from reopt.outcome_consumption import audit_consumption, render_consumption_audit
 from reopt.increment_cap import find_largest_clean_cap, render_cap_report
 from reopt.adoption_decision import decide_adoption, render_decision
@@ -329,6 +330,28 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertEqual(counters.tokens_after, 14000)
         self.assertEqual(counters.minutes_before, 10)
         self.assertEqual(counters.minutes_after, 105)
+
+    def test_goal_snapshot_normalizes_get_goal_output(self) -> None:
+        rendered = render_goal_snapshot(
+            json.dumps(
+                {
+                    "goal": {
+                        "objective": "private objective text",
+                        "status": "active",
+                        "tokensUsed": 2418708,
+                        "timeUsedSeconds": 166238,
+                        "updatedAt": 1790212528,
+                    },
+                    "remainingTokens": None,
+                }
+            )
+        )
+        data = json.loads(rendered)
+
+        self.assertEqual(data["goal"]["tokensUsed"], 2418708)
+        self.assertEqual(data["goal"]["timeUsedSeconds"], 166238)
+        self.assertEqual(data["goal"]["status"], "active")
+        self.assertNotIn("objective", data["goal"])
 
     def test_consumption_aware_calibration_excludes_consumed_quality_signal(self) -> None:
         base = UtilityWeights()
