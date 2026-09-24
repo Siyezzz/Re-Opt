@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,6 +18,12 @@ class ObservedRunCounters:
     tokens_after: int
     minutes_before: int
     minutes_after: int
+
+
+@dataclass(frozen=True)
+class GoalSnapshot:
+    tokens_used: int
+    time_used_seconds: int
 
 
 def outcome_from_counters(
@@ -43,6 +50,26 @@ def outcome_from_counters(
         time_budget_minutes=time_budget_minutes,
         missed_optional_harm=missed_optional_harm,
         evidence_ref=evidence_ref,
+    )
+
+
+def counters_from_goal_snapshots(before_path: Path, after_path: Path) -> ObservedRunCounters:
+    before = load_goal_snapshot(before_path)
+    after = load_goal_snapshot(after_path)
+    return ObservedRunCounters(
+        tokens_before=before.tokens_used,
+        tokens_after=after.tokens_used,
+        minutes_before=_floor_minutes(before.time_used_seconds),
+        minutes_after=_floor_minutes(after.time_used_seconds),
+    )
+
+
+def load_goal_snapshot(path: Path) -> GoalSnapshot:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    goal = data.get("goal", data)
+    return GoalSnapshot(
+        tokens_used=int(goal["tokensUsed"]),
+        time_used_seconds=int(goal["timeUsedSeconds"]),
     )
 
 
@@ -96,18 +123,32 @@ def _validate_counters(counters: ObservedRunCounters) -> None:
         raise ValueError("minutes_after must be greater than or equal to minutes_before")
 
 
+def _floor_minutes(seconds: int) -> int:
+    return seconds // 60
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Capture an observed run outcome.")
     parser.add_argument("--graph-id", required=True)
     parser.add_argument("--strategy", required=True)
     parser.add_argument("--observed-quality", type=float, required=True)
     parser.add_argument("--target-quality", type=float, required=True)
-    parser.add_argument("--tokens-before", type=int, required=True)
-    parser.add_argument("--tokens-after", type=int, required=True)
+    parser.add_argument("--tokens-before", type=int)
+    parser.add_argument("--tokens-after", type=int)
     parser.add_argument("--token-budget", type=int, required=True)
-    parser.add_argument("--minutes-before", type=int, required=True)
-    parser.add_argument("--minutes-after", type=int, required=True)
+    parser.add_argument("--minutes-before", type=int)
+    parser.add_argument("--minutes-after", type=int)
     parser.add_argument("--time-budget-minutes", type=int, required=True)
+    parser.add_argument(
+        "--goal-before",
+        type=Path,
+        help="Goal snapshot JSON before the observed run.",
+    )
+    parser.add_argument(
+        "--goal-after",
+        type=Path,
+        help="Goal snapshot JSON after the observed run.",
+    )
     parser.add_argument("--missed-optional-harm", type=float, default=0.0)
     parser.add_argument("--evidence-ref", required=True)
     parser.add_argument(
@@ -126,12 +167,7 @@ def main() -> None:
     parser.add_argument("--write-report", type=Path, help="Write a capture report.")
     args = parser.parse_args()
 
-    counters = ObservedRunCounters(
-        tokens_before=args.tokens_before,
-        tokens_after=args.tokens_after,
-        minutes_before=args.minutes_before,
-        minutes_after=args.minutes_after,
-    )
+    counters = _load_counters_from_args(args)
     outcome = outcome_from_counters(
         graph_id=args.graph_id,
         strategy=args.strategy,
@@ -158,6 +194,27 @@ def main() -> None:
         args.write_report.parent.mkdir(parents=True, exist_ok=True)
         args.write_report.write_text(report, encoding="utf-8")
     print(report)
+
+
+def _load_counters_from_args(args: argparse.Namespace) -> ObservedRunCounters:
+    if args.goal_before or args.goal_after:
+        if not (args.goal_before and args.goal_after):
+            raise SystemExit("error: --goal-before and --goal-after must be provided together")
+        return counters_from_goal_snapshots(args.goal_before, args.goal_after)
+    missing = [
+        name
+        for name in ("tokens_before", "tokens_after", "minutes_before", "minutes_after")
+        if getattr(args, name) is None
+    ]
+    if missing:
+        flags = ", ".join("--" + name.replace("_", "-") for name in missing)
+        raise SystemExit(f"error: missing counter arguments: {flags}")
+    return ObservedRunCounters(
+        tokens_before=args.tokens_before,
+        tokens_after=args.tokens_after,
+        minutes_before=args.minutes_before,
+        minutes_after=args.minutes_after,
+    )
 
 
 if __name__ == "__main__":

@@ -1147,3 +1147,31 @@ minute and missed-optional signals.
 Run `reopt.observed_run` with actual before/after goal counters and the required
 signal flags, then use the resulting outcome to rerun consumption-aware evidence
 review.
+
+## 2026-09-24 - Goal Snapshot Capture
+
+### Objective
+
+Connect observed outcome capture to Codex goal counters without requiring manual
+token and minute delta entry.
+
+### Implementation
+
+`reopt.observed_run` now accepts `--goal-before` and `--goal-after` JSON files in
+the same shape returned by the Codex goal tool. It reads `tokensUsed` and
+`timeUsedSeconds`, converts seconds to floor minutes, and derives the
+before/after counters used for outcome capture.
+
+### Observed Result
+
+A fixture with `tokensUsed` moving from `1000` to `14000` and
+`timeUsedSeconds` moving from `600` to `6300` produces `13000` tokens and
+`95` minutes. The generated intake command now references
+`docs/outcome-evidence/goal-before.json` and `goal-after.json` instead of raw
+counter placeholders.
+
+### Next Refinement
+
+Save real `get_goal` before/after snapshots for a future task turn, run
+`reopt.observed_run` from those files, and use the resulting outcome for
+consumption-aware evidence review.

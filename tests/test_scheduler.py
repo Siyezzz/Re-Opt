@@ -41,6 +41,7 @@ from reopt.evidence_review import (
 from reopt.observed_evidence import review_observed_evidence
 from reopt.observed_run import (
     ObservedRunCounters,
+    counters_from_goal_snapshots,
     outcome_from_counters,
     required_signal_failures,
     render_capture_report,
@@ -294,6 +295,40 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertNotIn("token signal requires actual_tokens above token_budget", failures)
         self.assertIn("minute signal requires actual_minutes above time_budget_minutes", failures)
         self.assertIn("missed_optional signal requires missed_optional_harm above 0", failures)
+
+    def test_observed_run_capture_reads_goal_snapshots(self) -> None:
+        with TemporaryDirectory() as tmp:
+            before_path = Path(tmp) / "before.json"
+            after_path = Path(tmp) / "after.json"
+            before_path.write_text(
+                json.dumps(
+                    {
+                        "goal": {
+                            "tokensUsed": 1000,
+                            "timeUsedSeconds": 600,
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            after_path.write_text(
+                json.dumps(
+                    {
+                        "goal": {
+                            "tokensUsed": 14000,
+                            "timeUsedSeconds": 6300,
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            counters = counters_from_goal_snapshots(before_path, after_path)
+
+        self.assertEqual(counters.tokens_before, 1000)
+        self.assertEqual(counters.tokens_after, 14000)
+        self.assertEqual(counters.minutes_before, 10)
+        self.assertEqual(counters.minutes_after, 105)
 
     def test_consumption_aware_calibration_excludes_consumed_quality_signal(self) -> None:
         base = UtilityWeights()
