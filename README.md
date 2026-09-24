@@ -41,6 +41,7 @@ python -m reopt.explain_adoption weights/proposed-seed.json --write-report docs/
 python -m reopt.outcome_intake --write docs/outcome-intake/next-outcome.md
 python -m reopt.goal_snapshot --input docs/outcome-evidence/raw-goal-before.json --write docs/outcome-evidence/goal-before.json
 python -m reopt.goal_snapshot --input docs/outcome-evidence/raw-goal-after.json --write docs/outcome-evidence/goal-after.json
+python -m reopt.goal_snapshot --before docs/outcome-evidence/goal-before.json --after docs/outcome-evidence/goal-after.json --write docs/outcome-evidence/goal-delta.json
 python -m reopt.observed_run --graph-id coding-debug-seed --strategy critical-path-a-star-v0 --observed-quality 0.85 --target-quality 0.8 --goal-before docs/outcome-evidence/goal-before.json --goal-after docs/outcome-evidence/goal-after.json --token-budget 12000 --time-budget-minutes 90 --missed-optional-harm 0.2 --evidence-ref OBSERVED_RUN_POINTER --require-signal token --require-signal minute --require-signal missed_optional --write outcomes/next-outcome.json --write-report docs/outcome-evidence/observed-run-capture.md
 python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-evidence-ref
 python -m reopt.outcome_intake --validate outcomes/next-outcome.json --require-unconsumed-for quality --require-evidence-ref

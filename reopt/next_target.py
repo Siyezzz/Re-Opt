@@ -390,6 +390,8 @@ def _expects_consumption_aware_review(latest_refinement: str) -> bool:
         or "Fill `outcomes/next-outcome.json`" in latest_refinement
         or "missed-optional" in latest_refinement
         or "reopt.observed_run" in latest_refinement
+        or "goal-delta.json" in latest_refinement
+        or "consumption-aware evidence review" in latest_refinement
     )
 
 

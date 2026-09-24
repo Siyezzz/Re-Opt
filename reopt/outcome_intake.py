@@ -75,6 +75,7 @@ def suggest_outcome_intake(
         suggested_commands=(
             "python -m reopt.goal_snapshot --input docs/outcome-evidence/raw-goal-before.json --write docs/outcome-evidence/goal-before.json",
             "python -m reopt.goal_snapshot --input docs/outcome-evidence/raw-goal-after.json --write docs/outcome-evidence/goal-after.json",
+            "python -m reopt.goal_snapshot --before docs/outcome-evidence/goal-before.json --after docs/outcome-evidence/goal-after.json --write docs/outcome-evidence/goal-delta.json",
             _capture_command(suggested),
             *validation_commands,
             "python -m reopt.outcomes outcomes/next-outcome.json",

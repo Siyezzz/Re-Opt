@@ -1201,3 +1201,27 @@ normalized snapshot.
 Capture actual before/after goal snapshots around a future task turn, normalize
 them with `reopt.goal_snapshot`, then run `reopt.observed_run` and
 consumption-aware evidence review.
+
+## 2026-09-24 - Goal Snapshot Delta Check
+
+### Objective
+
+Make the before/after snapshot pair auditable before `reopt.observed_run` turns
+it into outcome evidence.
+
+### Implementation
+
+Extended `reopt.goal_snapshot` with `--before` and `--after` mode. It reports
+`tokensUsedDelta`, `timeUsedSecondsDelta`, and `timeUsedMinutesDelta`, and it
+fails if the after snapshot moves backward.
+
+### Observed Result
+
+A fixture moving from `1000` to `14000` tokens and from `600` to `6300` seconds
+reports `13000` tokens, `5700` seconds, and `95` minutes. The intake flow now
+adds a `goal-delta.json` report before observed-run capture.
+
+### Next Refinement
+
+Capture a real before/after goal pair, inspect `goal-delta.json`, then generate
+and review the observed outcome.

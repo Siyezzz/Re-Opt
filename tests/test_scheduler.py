@@ -46,7 +46,7 @@ from reopt.observed_run import (
     required_signal_failures,
     render_capture_report,
 )
-from reopt.goal_snapshot import render_goal_snapshot
+from reopt.goal_snapshot import render_goal_snapshot, render_goal_snapshot_delta
 from reopt.outcome_consumption import audit_consumption, render_consumption_audit
 from reopt.increment_cap import find_largest_clean_cap, render_cap_report
 from reopt.adoption_decision import decide_adoption, render_decision
@@ -352,6 +352,33 @@ class HeuristicSchedulerTest(unittest.TestCase):
         self.assertEqual(data["goal"]["timeUsedSeconds"], 166238)
         self.assertEqual(data["goal"]["status"], "active")
         self.assertNotIn("objective", data["goal"])
+
+    def test_goal_snapshot_delta_reports_counter_changes(self) -> None:
+        rendered = render_goal_snapshot_delta(
+            json.dumps(
+                {
+                    "goal": {
+                        "status": "active",
+                        "tokensUsed": 1000,
+                        "timeUsedSeconds": 600,
+                    }
+                }
+            ),
+            json.dumps(
+                {
+                    "goal": {
+                        "status": "active",
+                        "tokensUsed": 14000,
+                        "timeUsedSeconds": 6300,
+                    }
+                }
+            ),
+        )
+        data = json.loads(rendered)
+
+        self.assertEqual(data["delta"]["tokensUsedDelta"], 13000)
+        self.assertEqual(data["delta"]["timeUsedSecondsDelta"], 5700)
+        self.assertEqual(data["delta"]["timeUsedMinutesDelta"], 95)
 
     def test_consumption_aware_calibration_excludes_consumed_quality_signal(self) -> None:
         base = UtilityWeights()
@@ -1515,8 +1542,8 @@ class HeuristicSchedulerTest(unittest.TestCase):
                         "",
                         "### Next Refinement",
                         "",
-                        "Run `reopt.observed_run` with actual Codex goal counters, "
-                        "then validate token, minute, missed-optional, and evidence-ref requirements.",
+                        "Capture a real before/after goal pair, inspect `goal-delta.json`, "
+                        "then generate and review the observed outcome.",
                     ]
                 ),
                 encoding="utf-8",
